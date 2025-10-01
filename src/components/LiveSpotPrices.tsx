@@ -1,4 +1,5 @@
 import { AppCard } from '@/src/components/ui';
+import { colors } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import { Animated, Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -93,7 +94,7 @@ export function LiveSpotPrices({ onError }: LiveSpotPricesProps) {
             <View key={index} style={styles.priceCard}>
               <View style={styles.priceHeader}>
                 <View style={styles.metalIconContainer}>
-                  <Ionicons name="diamond" size={20} color="#C8A75E" />
+                  <Ionicons name="diamond" size={20} color={colors.brand} />
                 </View>
                 <Text style={styles.metalName}>Loading...</Text>
               </View>
@@ -120,7 +121,7 @@ export function LiveSpotPrices({ onError }: LiveSpotPricesProps) {
           <Text style={styles.updateText}>{updateText()}</Text>
         </View>
         <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle" size={32} color="#D14343" />
+          <Ionicons name="alert-circle" size={32} color={colors.danger} />
           <Text style={styles.errorText}>Unable to load live prices</Text>
           <TouchableOpacity style={styles.retryButton} onPress={loadPrices}>
             <Text style={styles.retryText}>Retry</Text>
@@ -156,7 +157,7 @@ export function LiveSpotPrices({ onError }: LiveSpotPricesProps) {
               <Ionicons 
                 name={METAL_ICONS[price.metal as keyof typeof METAL_ICONS] as any} 
                 size={24} 
-                color="#C8A75E" 
+                color={colors.brand} 
               />
               <Text style={styles.metalName}>{price.metal}</Text>
             </View>
@@ -172,7 +173,7 @@ export function LiveSpotPrices({ onError }: LiveSpotPricesProps) {
               <Text style={styles.changeLabel}>24h Change</Text>
               <Text style={[
                 styles.changeValue,
-                { color: price.change >= 0 ? '#0FA47A' : '#D14343' }
+                { color: price.change >= 0 ? colors.success : colors.danger }
               ]}>
                 {price.change >= 0 ? '+' : ''}{price.change.toFixed(2)}%
               </Text>
@@ -198,23 +199,23 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#0E2033',
+    color: colors.text.primary,
   },
   updateText: {
     fontSize: 12,
-    color: '#6B7280',
+    color: colors.text.secondary,
   },
   scrollContent: {
     paddingHorizontal: 16,
   },
   priceCard: {
     width: CARD_WIDTH,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     marginRight: CARD_SPACING,
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: colors.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -231,14 +232,14 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#F6F7F8',
+    backgroundColor: colors.bg,
     justifyContent: 'center',
     alignItems: 'center',
   },
   metalName: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#0E2033',
+    color: colors.text.primary,
     textTransform: 'capitalize',
   },
   priceContent: {
@@ -247,12 +248,12 @@ const styles = StyleSheet.create({
   priceValue: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#0E2033',
+    color: colors.text.primary,
     marginBottom: 4,
   },
   priceUnit: {
     fontSize: 12,
-    color: '#6B7280',
+    color: colors.text.secondary,
   },
   priceChange: {
     flexDirection: 'row',
@@ -261,7 +262,7 @@ const styles = StyleSheet.create({
   },
   changeLabel: {
     fontSize: 12,
-    color: '#6B7280',
+    color: colors.text.secondary,
   },
   changeValue: {
     fontSize: 14,
@@ -274,16 +275,16 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 14,
-    color: '#6B7280',
+    color: colors.text.secondary,
   },
   retryButton: {
-    backgroundColor: '#0B1B2B',
+    backgroundColor: colors.text.primary,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
   },
   retryText: {
-    color: '#FFFFFF',
+    color: colors.surface,
     fontSize: 14,
     fontWeight: '500',
   },

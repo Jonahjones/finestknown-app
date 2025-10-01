@@ -8,7 +8,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const ALLOWED_FILES = ['src/theme.ts'];
+const ALLOWED_FILES = ['src/theme.ts', 'src/design/tokens.ts'];
+const ALLOWED_COLORS = ['#000', '#000000']; // Standard shadow colors
 const HEX_REGEX = /#[0-9A-Fa-f]{6}|#[0-9A-Fa-f]{3}(?![0-9A-Fa-f])/g;
 
 function scanDirectory(dir, results = []) {
@@ -40,11 +41,18 @@ function scanDirectory(dir, results = []) {
         lines.forEach((line, index) => {
           const lineMatches = line.match(HEX_REGEX);
           if (lineMatches) {
-            violations.push({
-              line: index + 1,
-              content: line.trim(),
-              colors: lineMatches
-            });
+            // Filter out allowed colors (like #000 for shadows)
+            const disallowedColors = lineMatches.filter(color => 
+              !ALLOWED_COLORS.includes(color.toLowerCase())
+            );
+            
+            if (disallowedColors.length > 0) {
+              violations.push({
+                line: index + 1,
+                content: line.trim(),
+                colors: disallowedColors
+              });
+            }
           }
         });
         

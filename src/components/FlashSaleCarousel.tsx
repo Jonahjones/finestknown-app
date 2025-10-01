@@ -2,6 +2,7 @@ import { FlashSaleItem, getActiveFlashSales } from '@/src/api/discounts';
 import { AppCard, PriceTag } from '@/src/components/ui';
 import { useAddToCartMutation } from '@/src/hooks/useCart';
 import { analytics } from '@/src/utils/analytics';
+import { colors } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
@@ -140,7 +141,7 @@ export function FlashSaleCarousel({ onEmpty }: FlashSaleCarouselProps) {
           <Text style={styles.title}>Flash Sale</Text>
         </View>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="small" color="#0B1B2B" />
+          <ActivityIndicator size="small" color={colors.text.primary} />
           <Text style={styles.loadingText}>Loading flash sales...</Text>
         </View>
       </View>
@@ -154,7 +155,7 @@ export function FlashSaleCarousel({ onEmpty }: FlashSaleCarouselProps) {
           <Text style={styles.title}>Flash Sale</Text>
         </View>
         <View style={styles.errorContainer}>
-          <Ionicons name="warning" size={48} color="#D14343" />
+          <Ionicons name="warning" size={48} color={colors.danger} />
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={loadFlashSales}>
             <Text style={styles.retryButtonText}>Retry</Text>
@@ -171,7 +172,7 @@ export function FlashSaleCarousel({ onEmpty }: FlashSaleCarouselProps) {
           <Text style={styles.title}>Flash Sale</Text>
         </View>
         <View style={styles.emptyContainer}>
-          <Ionicons name="flash" size={48} color="#6B7280" />
+          <Ionicons name="flash" size={48} color={colors.text.secondary} />
           <Text style={styles.emptyText}>No flash sales available</Text>
         </View>
       </View>
@@ -234,7 +235,7 @@ export function FlashSaleCarousel({ onEmpty }: FlashSaleCarouselProps) {
               />
               
               <View style={styles.countdown}>
-                <Ionicons name="time" size={14} color="#D14343" />
+                <Ionicons name="time" size={14} color={colors.danger} />
                 <Text style={styles.countdownText}>
                   Ends in {formatTimeRemaining(item.endsAt)}
                 </Text>
@@ -247,12 +248,12 @@ export function FlashSaleCarousel({ onEmpty }: FlashSaleCarouselProps) {
               >
                 {addToCartMutation.isPending ? (
                   <>
-                    <ActivityIndicator size="small" color="#FFFFFF" />
+                    <ActivityIndicator size="small" color={colors.surface} />
                     <Text style={styles.addToCartText}>Adding...</Text>
                   </>
                 ) : (
                   <>
-                    <Ionicons name="cart" size={16} color="#FFFFFF" />
+                    <Ionicons name="cart" size={16} color={colors.surface} />
                     <Text style={styles.addToCartText}>Add to Cart</Text>
                   </>
                 )}
@@ -294,10 +295,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#0E2033',
+    color: colors.text.primary,
   },
   headerDiscountBadge: {
-    backgroundColor: '#D14343',
+    backgroundColor: colors.danger,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
@@ -305,7 +306,7 @@ const styles = StyleSheet.create({
   headerDiscountText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.surface,
   },
   loadingContainer: {
     flexDirection: 'row',
@@ -316,7 +317,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 14,
-    color: '#6B7280',
+    color: colors.text.secondary,
   },
   emptyContainer: {
     alignItems: 'center',
@@ -325,7 +326,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 14,
-    color: '#6B7280',
+    color: colors.text.secondary,
   },
   errorContainer: {
     alignItems: 'center',
@@ -334,17 +335,17 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 14,
-    color: '#D14343',
+    color: colors.danger,
     textAlign: 'center',
   },
   retryButton: {
-    backgroundColor: '#0B1B2B',
+    backgroundColor: colors.text.primary,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 6,
   },
   retryButtonText: {
-    color: '#FFFFFF',
+    color: colors.surface,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -360,13 +361,13 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     aspectRatio: 4/3,
-    backgroundColor: '#F6F7F8',
+    backgroundColor: colors.bg,
   },
   cardDiscountBadge: {
     position: 'absolute',
     top: 20,
     right: 20,
-    backgroundColor: '#D14343',
+    backgroundColor: colors.danger,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 6,
@@ -376,7 +377,7 @@ const styles = StyleSheet.create({
   cardDiscountText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: colors.surface,
   },
   content: {
     padding: 10,
@@ -384,7 +385,7 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#0E2033',
+    color: colors.text.primary,
     marginBottom: 6,
     lineHeight: 18,
     minHeight: 36, // 2 lines: 18 * 2
@@ -398,11 +399,11 @@ const styles = StyleSheet.create({
   salePrice: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#0E2033',
+    color: colors.text.primary,
   },
   oldPrice: {
     fontSize: 12,
-    color: '#6B7280',
+    color: colors.text.secondary,
     textDecorationLine: 'line-through',
   },
   countdown: {
@@ -413,14 +414,14 @@ const styles = StyleSheet.create({
   },
   countdownText: {
     fontSize: 11,
-    color: '#D14343',
+    color: colors.danger,
     fontWeight: '600',
   },
   addToCartButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#0B1B2B',
+    backgroundColor: colors.text.primary,
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 8,
@@ -429,7 +430,7 @@ const styles = StyleSheet.create({
   addToCartText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.surface,
   },
   pagination: {
     flexDirection: 'row',
@@ -441,9 +442,9 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#F6F7F8',
+    backgroundColor: colors.bg,
   },
   paginationDotActive: {
-    backgroundColor: '#0B1B2B',
+    backgroundColor: colors.text.primary,
   },
 });

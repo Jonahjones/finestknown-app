@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 8,
     shadowOpacity: 0.08,
-    shadowColor: '#000000',
+    shadowColor: '#000',
     elevation: 2,
   },
   tile: {

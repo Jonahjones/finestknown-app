@@ -2,7 +2,8 @@ import { listCartItems } from '@/src/api/cart';
 import { fetchLivePrices } from '@/src/api/pricing';
 import { FinestKnownLogo } from '@/src/components/FinestKnownLogo';
 import { Card } from '@/src/components/ui';
-import { colors, shadows, spacing, typography } from '@/src/design/tokens';
+import { colors } from '@/src/theme';
+import { shadows, spacing, typography } from '@/src/design/tokens';
 import { useIsAdmin } from '@/src/hooks/useIsAdmin';
 import { useAuth } from '@/src/store/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
@@ -234,13 +235,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ title, style, showLivePric
                         } 
                         size={16} 
                         color={
-                          price.metal === 'Gold' ? '#FFD700' :
-                          price.metal === 'Silver' ? '#C0C0C0' :
-                          price.metal === 'Platinum' ? '#E5E4E2' :
-                          price.metal === 'Palladium' ? '#B4B4B4' :
-                          price.metal === 'Copper' ? '#B87333' :
-                          price.metal === 'Rhodium' ? '#A0A0A0' :
-                          colors.gold
+                          price.metal === 'Gold' ? colors.metal.gold :
+                          price.metal === 'Silver' ? colors.metal.silver :
+                          price.metal === 'Platinum' ? colors.metal.platinum :
+                          price.metal === 'Palladium' ? colors.metal.palladium :
+                          price.metal === 'Copper' ? colors.metal.copper :
+                          price.metal === 'Rhodium' ? colors.metal.rhodium :
+                          colors.brand
                         } 
                       />
                       <Text style={styles.livePriceMetal}>{price.metal}</Text>
@@ -264,13 +265,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ title, style, showLivePric
                         } 
                         size={16} 
                         color={
-                          price.metal === 'Gold' ? '#FFD700' :
-                          price.metal === 'Silver' ? '#C0C0C0' :
-                          price.metal === 'Platinum' ? '#E5E4E2' :
-                          price.metal === 'Palladium' ? '#B4B4B4' :
-                          price.metal === 'Copper' ? '#B87333' :
-                          price.metal === 'Rhodium' ? '#A0A0A0' :
-                          colors.gold
+                          price.metal === 'Gold' ? colors.metal.gold :
+                          price.metal === 'Silver' ? colors.metal.silver :
+                          price.metal === 'Platinum' ? colors.metal.platinum :
+                          price.metal === 'Palladium' ? colors.metal.palladium :
+                          price.metal === 'Copper' ? colors.metal.copper :
+                          price.metal === 'Rhodium' ? colors.metal.rhodium :
+                          colors.brand
                         } 
                       />
                       <Text style={styles.livePriceMetal}>{price.metal}</Text>

@@ -13,7 +13,17 @@ export const colors = {
   brandDark: "#A9882F",        // pressed, hover
   success: "#178A50",          // in stock, confirmations
   danger: "#D33A2C",           // sale, destructive
-  border: "#E7E5E4"            // dividers, outlines
+  border: "#E7E5E4",           // dividers, outlines
+  
+  // Metal colors for live prices and icons
+  metal: {
+    gold: "#FFD700",
+    silver: "#C0C0C0",
+    platinum: "#E5E4E2",
+    palladium: "#B4B4B4",
+    copper: "#B87333",
+    rhodium: "#A0A0A0"
+  }
 };
 
 export const radii = { 

@@ -64,7 +64,7 @@ export function Button({
         activeOpacity={motion.pressScale}
       >
         <LinearGradient
-          colors={['#D4AF37', '#B8860B', '#DAA520']} // Gold gradient
+          colors={[colors.brand, colors.brandDark, colors.brand]} // Gold gradient
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[styles.gradientButton, styles[size]]}
