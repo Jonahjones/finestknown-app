@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ViewStyle
 } from 'react-native';
+import { colors as themeColors } from '../../theme';
 import { colors, motion, radius, spacing, typography } from '../../design/tokens';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'cta';
@@ -64,7 +65,7 @@ export function Button({
         activeOpacity={motion.pressScale}
       >
         <LinearGradient
-          colors={[colors.brand, colors.brandDark, colors.brand]} // Gold gradient
+          colors={[themeColors.brand, themeColors.brandDark, themeColors.brand]} // Gold gradient
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[styles.gradientButton, styles[size]]}
