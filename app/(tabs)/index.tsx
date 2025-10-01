@@ -2,7 +2,7 @@ import { AppHeader } from '@/src/components/AppHeader';
 import { FeaturedDrops } from '@/src/components/FeaturedDrops';
 import { FinestKnownLogo } from '@/src/components/FinestKnownLogo';
 import { FlashSaleCarousel } from '@/src/components/FlashSaleCarousel';
-import { PriceTicker, ResourceItem, SectionHeader } from '@/src/components/home';
+import { ResourceItem, SectionHeader } from '@/src/components/home';
 import { colors, radii, shadow, spacing, type } from '@/src/theme';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -83,13 +83,6 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.container}>
         <AppHeader title="Finest Known" showLivePrices={true} />
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Price Ticker */}
-        <PriceTicker items={[
-          { label: 'Gold', value: '$2,345', change: '+2.3%' },
-          { label: 'Silver', value: '$28.50', change: '-0.5%' },
-          { label: 'Platinum', value: '$1,023', change: '+1.2%' },
-        ]} />
-
         {/* Hero Section with Typing Animation */}
         <View style={styles.heroSection}>
           <View style={styles.heroContent}>
