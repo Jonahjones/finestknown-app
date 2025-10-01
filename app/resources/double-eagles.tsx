@@ -296,44 +296,37 @@ export default function DoubleEaglesPage() {
         {/* Featured Products Section */}
         <View style={styles.productsSection}>
           <Text style={styles.productsTitle}>FEATURED DOUBLE EAGLE PRODUCTS</Text>
-          
-          {/* Latest Row */}
-          <View style={styles.productRow}>
-            <Text style={styles.rowTitle}>LATEST</Text>
-            <FlatList
-              data={latestProducts}
-              renderItem={renderProduct}
-              keyExtractor={(item) => item.id}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.productRowContent}
-            />
-          </View>
-
-          {/* Best Selling Row */}
-          <View style={styles.productRow}>
-            <Text style={styles.rowTitle}>BEST SELLING</Text>
-            <FlatList
-              data={bestSellingProducts}
-              renderItem={renderProduct}
-              keyExtractor={(item) => `best-${item.id}`}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.productRowContent}
-            />
-          </View>
-
-          {/* Top Rated Row */}
-          <View style={styles.productRow}>
-            <Text style={styles.rowTitle}>TOP RATED</Text>
-            <FlatList
-              data={topRatedProducts}
-              renderItem={renderProduct}
-              keyExtractor={(item) => `top-${item.id}`}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.productRowContent}
-            />
+          <View style={styles.productsGrid}>
+            <View style={styles.productColumn}>
+              <Text style={styles.columnTitle}>LATEST</Text>
+              <FlatList
+                data={latestProducts.slice(0, 4)}
+                renderItem={renderProduct}
+                keyExtractor={(item) => item.id}
+                scrollEnabled={false}
+                showsVerticalScrollIndicator={false}
+              />
+            </View>
+            <View style={styles.productColumn}>
+              <Text style={styles.columnTitle}>BEST SELLING</Text>
+              <FlatList
+                data={bestSellingProducts.slice(0, 4)}
+                renderItem={renderProduct}
+                keyExtractor={(item) => `best-${item.id}`}
+                scrollEnabled={false}
+                showsVerticalScrollIndicator={false}
+              />
+            </View>
+            <View style={styles.productColumn}>
+              <Text style={styles.columnTitle}>TOP RATED</Text>
+              <FlatList
+                data={topRatedProducts.slice(0, 3)}
+                renderItem={renderProduct}
+                keyExtractor={(item) => `top-${item.id}`}
+                scrollEnabled={false}
+                showsVerticalScrollIndicator={false}
+              />
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -451,7 +444,7 @@ const styles = StyleSheet.create({
   },
   categoryItem: {
     fontSize: 14,
-    color: colors.text,
+    color: colors.textPrimary,
     marginBottom: spacing.xs,
     paddingVertical: 2,
   },
@@ -490,37 +483,37 @@ const styles = StyleSheet.create({
     color: colors.navy,
     textAlign: 'center',
     marginBottom: spacing.xl,
-    paddingHorizontal: spacing.lg,
   },
-  productRow: {
-    marginBottom: spacing.xl,
+  productsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
-  rowTitle: {
+  productColumn: {
+    flex: 1,
+    marginHorizontal: spacing.xs,
+  },
+  columnTitle: {
     fontSize: 16,
     fontWeight: '700',
     color: colors.navy,
     marginBottom: spacing.md,
-    paddingHorizontal: spacing.lg,
+    textAlign: 'center',
     borderBottomWidth: 1,
     borderBottomColor: colors.platinum,
     paddingBottom: spacing.sm,
   },
-  productRowContent: {
-    paddingHorizontal: spacing.lg,
-  },
   productCard: {
-    width: 280,
     flexDirection: 'row',
     backgroundColor: colors.background,
     borderRadius: 8,
-    padding: spacing.md,
-    marginRight: spacing.md,
+    padding: spacing.sm,
+    marginBottom: spacing.sm,
     borderWidth: 1,
     borderColor: colors.platinum,
   },
   productImage: {
-    width: 80,
-    height: 80,
+    width: 60,
+    height: 60,
     borderRadius: 4,
     marginRight: spacing.md,
   },
@@ -534,18 +527,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   productTitle: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '500',
-    color: colors.text,
-    marginBottom: 6,
-    lineHeight: 18,
+    color: colors.textPrimary,
+    marginBottom: 4,
+    lineHeight: 16,
   },
   productRating: {
     flexDirection: 'row',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   productPrice: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '700',
     color: colors.navy,
   },
