@@ -28,6 +28,15 @@ export default function RootLayout() {
               <Stack.Screen name="product/[id]" options={{ presentation: 'modal' }} />
               <Stack.Screen name="purchase/[id]" options={{ presentation: 'modal', title: 'Purchase' }} />
               <Stack.Screen name="checkout" options={{ presentation: 'modal', title: 'Checkout' }} />
+              <Stack.Screen name="admin/index" options={{ headerShown: false }} />
+              <Stack.Screen name="admin/new" options={{ headerShown: false }} />
+              <Stack.Screen name="admin/[id]" options={{ headerShown: false }} />
+              <Stack.Screen name="account/index" options={{ headerShown: false }} />
+              <Stack.Screen name="account/orders" options={{ headerShown: false }} />
+              <Stack.Screen name="account/orders/[id]" options={{ headerShown: false }} />
+              <Stack.Screen name="learn/[slug]" options={{ headerShown: false }} />
+              <Stack.Screen name="article/[id]" options={{ headerShown: false }} />
+              <Stack.Screen name="support/contact" options={{ headerShown: false }} />
             </Stack>
           </AuthWrapper>
           <StatusBar 
