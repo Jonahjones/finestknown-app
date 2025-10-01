@@ -583,7 +583,7 @@ const styles = StyleSheet.create({
   // Live Prices Styles
   livePricesContainer: {
     flex: 1,
-    height: 40,
+    height: 44,
     marginRight: spacing.l,
   },
   livePricesScroll: {
@@ -592,30 +592,32 @@ const styles = StyleSheet.create({
   livePricesRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
   },
   livePriceItem: {
-    marginRight: 12, // Consistent spacing between items
+    marginRight: spacing.m,
   },
   livePriceContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.cardBackground,
-    paddingHorizontal: spacing.xs,
-    paddingVertical: 4,
-    borderRadius: 12,
+    backgroundColor: colors.ivory,
+    paddingHorizontal: spacing.m,
+    paddingVertical: spacing.s,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.platinum,
     ...shadows.e1,
   },
   livePriceMetal: {
-    fontSize: typography.caption.size,
-    fontWeight: typography.weights.semibold,
-    color: colors.textPrimary,
-    marginLeft: spacing.xs,
-    marginRight: spacing.sm,
-  },
-  livePriceValue: {
-    fontSize: typography.body.size,
+    fontSize: 11,
     fontWeight: typography.weights.bold,
     color: colors.navy,
+    marginLeft: spacing.xs,
+    marginRight: spacing.xs,
+  },
+  livePriceValue: {
+    fontSize: 13,
+    fontWeight: typography.weights.bold,
+    color: colors.gold,
   },
 });
