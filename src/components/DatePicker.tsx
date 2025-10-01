@@ -44,26 +44,29 @@ export function DatePicker({
   };
 
   const showDateInput = () => {
-    // For now, let's use a simple approach that works on all platforms
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
     
-    const nextWeek = new Date(today);
-    nextWeek.setDate(nextWeek.getDate() + 7);
+    const threeDays = new Date(today);
+    threeDays.setDate(threeDays.getDate() + 3);
     
-    // Set default dates based on context
-    let defaultStart = value || formatDate(today);
-    let defaultEnd = formatDate(nextWeek);
+    const oneWeek = new Date(today);
+    oneWeek.setDate(oneWeek.getDate() + 7);
     
-    if (minimumDate) {
-      defaultStart = formatDate(minimumDate);
-    }
+    const twoWeeks = new Date(today);
+    twoWeeks.setDate(twoWeeks.getDate() + 14);
     
-    // Show a simple alert with options
+    const oneMonth = new Date(today);
+    oneMonth.setDate(oneMonth.getDate() + 30);
+    
+    const threeMonths = new Date(today);
+    threeMonths.setDate(threeMonths.getDate() + 90);
+    
+    // Show alert with preset options
     Alert.alert(
       'Select Date',
-      'Choose a date option:',
+      'Choose a preset date or enter custom:',
       [
         { text: 'Cancel', style: 'cancel' },
         { 
@@ -75,10 +78,61 @@ export function DatePicker({
           onPress: () => onChangeText(formatDate(tomorrow))
         },
         { 
-          text: 'Next Week', 
-          onPress: () => onChangeText(formatDate(nextWeek))
+          text: '3 Days', 
+          onPress: () => onChangeText(formatDate(threeDays))
+        },
+        { 
+          text: '1 Week', 
+          onPress: () => onChangeText(formatDate(oneWeek))
+        },
+        { 
+          text: '2 Weeks', 
+          onPress: () => onChangeText(formatDate(twoWeeks))
+        },
+        { 
+          text: '1 Month', 
+          onPress: () => onChangeText(formatDate(oneMonth))
+        },
+        { 
+          text: '3 Months', 
+          onPress: () => onChangeText(formatDate(threeMonths))
+        },
+        {
+          text: 'Custom Date',
+          onPress: () => showCustomDateInput()
         }
       ]
+    );
+  };
+
+  const showCustomDateInput = () => {
+    Alert.prompt(
+      'Enter Custom Date',
+      'Format: YYYY-MM-DD (e.g., 2025-12-31)',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Set',
+          onPress: (input?: string) => {
+            if (input && /^\d{4}-\d{2}-\d{2}$/.test(input)) {
+              const inputDate = parseDate(input);
+              if (minimumDate && inputDate < minimumDate) {
+                Alert.alert('Invalid Date', 'Date cannot be before the minimum date');
+                return;
+              }
+              if (maximumDate && inputDate > maximumDate) {
+                Alert.alert('Invalid Date', 'Date cannot be after the maximum date');
+                return;
+              }
+              onChangeText(input);
+            } else {
+              Alert.alert('Invalid Format', 'Please use YYYY-MM-DD format');
+            }
+          }
+        }
+      ],
+      'plain-text',
+      value || formatDate(new Date())
     );
   };
 
