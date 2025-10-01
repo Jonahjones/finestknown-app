@@ -354,13 +354,12 @@ const styles = StyleSheet.create({
   cardContainer: {
     width: CARD_WIDTH,
     marginRight: CARD_SPACING,
-    height: 380,
     borderRadius: 12,
     overflow: 'hidden',
   },
   image: {
     width: '100%',
-    height: 180,
+    aspectRatio: 4/3,
     backgroundColor: '#F6F7F8',
   },
   cardDiscountBadge: {
