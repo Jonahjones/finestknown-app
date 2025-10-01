@@ -379,24 +379,20 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   content: {
-    flex: 1,
-    padding: 12,
-    justifyContent: 'space-between',
+    padding: 10,
   },
   itemName: {
     fontSize: 14,
     fontWeight: '600',
     color: '#0E2033',
-    marginBottom: 8,
-    lineHeight: 16,
-    height: 32, // Fixed height for 2 lines
+    marginBottom: 6,
+    lineHeight: 18,
   },
   priceContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     marginBottom: 6,
-    height: 24, // Fixed height
   },
   salePrice: {
     fontSize: 16,
@@ -404,7 +400,7 @@ const styles = StyleSheet.create({
     color: '#0E2033',
   },
   oldPrice: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#6B7280',
     textDecorationLine: 'line-through',
   },
@@ -413,11 +409,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     marginBottom: 8,
-    paddingVertical: 4,
-    height: 24, // Fixed height
   },
   countdownText: {
-    fontSize: 13,
+    fontSize: 11,
     color: '#D14343',
     fontWeight: '600',
   },
@@ -426,12 +420,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#0B1B2B',
-    paddingVertical: 12,
+    paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 8,
     gap: 6,
-    height: 44, // Fixed height
-    marginTop: 'auto', // Push to bottom
   },
   addToCartText: {
     fontSize: 12,

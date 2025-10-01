@@ -210,7 +210,6 @@ const styles = StyleSheet.create({
   },
   featuredCard: {
     width: 200,
-    height: 380,
     backgroundColor: colors.surface,
     borderRadius: radii.lg,
     borderWidth: 1,
@@ -220,7 +219,8 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     position: 'relative',
-    height: 240,
+    width: '100%',
+    aspectRatio: 4/3,
   },
   featuredImage: {
     width: '100%',
@@ -260,9 +260,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   featuredContent: {
-    flex: 1,
-    padding: spacing.md,
-    justifyContent: 'space-between',
+    padding: spacing.sm,
   },
   titleRow: {
     flexDirection: 'row',
@@ -321,7 +319,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 'auto',
+    marginTop: spacing.sm,
   },
   featuredPrice: {
     ...type.title,
