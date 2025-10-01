@@ -365,8 +365,8 @@ const styles = StyleSheet.create({
   },
   cardDiscountBadge: {
     position: 'absolute',
-    top: 12,
-    right: 12,
+    top: 20,
+    right: 20,
     backgroundColor: '#D14343',
     paddingHorizontal: 10,
     paddingVertical: 6,
