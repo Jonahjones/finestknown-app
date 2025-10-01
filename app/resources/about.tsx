@@ -189,7 +189,7 @@ const FEATURED_PRODUCTS = [
 export default function AboutPage() {
   const { data: products } = useQuery({
     queryKey: ['about-products'],
-    queryFn: () => listProducts({ limit: 8 }),
+    queryFn: () => listProducts({ pageSize: 8 }),
   });
 
   const renderArticle = ({ item }: { item: any }) => (
@@ -287,37 +287,44 @@ export default function AboutPage() {
         {/* Featured Products Section */}
         <View style={styles.productsSection}>
           <Text style={styles.productsTitle}>FEATURED PRODUCTS</Text>
-          <View style={styles.productsGrid}>
-            <View style={styles.productColumn}>
-              <Text style={styles.columnTitle}>LATEST</Text>
-              <FlatList
-                data={FEATURED_PRODUCTS.slice(0, 4)}
-                renderItem={renderProduct}
-                keyExtractor={(item) => item.id}
-                scrollEnabled={false}
-                showsVerticalScrollIndicator={false}
-              />
-            </View>
-            <View style={styles.productColumn}>
-              <Text style={styles.columnTitle}>BEST SELLING</Text>
-              <FlatList
-                data={FEATURED_PRODUCTS.slice(0, 4)}
-                renderItem={renderProduct}
-                keyExtractor={(item) => item.id}
-                scrollEnabled={false}
-                showsVerticalScrollIndicator={false}
-              />
-            </View>
-            <View style={styles.productColumn}>
-              <Text style={styles.columnTitle}>TOP RATED</Text>
-              <FlatList
-                data={FEATURED_PRODUCTS.slice(0, 3)}
-                renderItem={renderProduct}
-                keyExtractor={(item) => item.id}
-                scrollEnabled={false}
-                showsVerticalScrollIndicator={false}
-              />
-            </View>
+          
+          {/* Latest Row */}
+          <View style={styles.productRow}>
+            <Text style={styles.rowTitle}>LATEST</Text>
+            <FlatList
+              data={FEATURED_PRODUCTS}
+              renderItem={renderProduct}
+              keyExtractor={(item) => item.id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.productRowContent}
+            />
+          </View>
+
+          {/* Best Selling Row */}
+          <View style={styles.productRow}>
+            <Text style={styles.rowTitle}>BEST SELLING</Text>
+            <FlatList
+              data={FEATURED_PRODUCTS}
+              renderItem={renderProduct}
+              keyExtractor={(item) => `best-${item.id}`}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.productRowContent}
+            />
+          </View>
+
+          {/* Top Rated Row */}
+          <View style={styles.productRow}>
+            <Text style={styles.rowTitle}>TOP RATED</Text>
+            <FlatList
+              data={FEATURED_PRODUCTS.slice(0, 3)}
+              renderItem={renderProduct}
+              keyExtractor={(item) => `top-${item.id}`}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.productRowContent}
+            />
           </View>
         </View>
       </ScrollView>
@@ -435,7 +442,7 @@ const styles = StyleSheet.create({
   },
   specializationItem: {
     fontSize: 14,
-    color: colors.text,
+    color: colors.textPrimary,
     marginBottom: spacing.xs,
     paddingVertical: 2,
   },
@@ -444,7 +451,7 @@ const styles = StyleSheet.create({
   },
   contactItem: {
     fontSize: 14,
-    color: colors.text,
+    color: colors.textPrimary,
     marginBottom: spacing.xs,
     paddingVertical: 2,
   },
@@ -460,56 +467,57 @@ const styles = StyleSheet.create({
     color: colors.navy,
     textAlign: 'center',
     marginBottom: spacing.xl,
+    paddingHorizontal: spacing.lg,
   },
-  productsGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  productRow: {
+    marginBottom: spacing.xl,
   },
-  productColumn: {
-    flex: 1,
-    marginHorizontal: spacing.xs,
-  },
-  columnTitle: {
+  rowTitle: {
     fontSize: 16,
     fontWeight: '700',
     color: colors.navy,
     marginBottom: spacing.md,
-    textAlign: 'center',
+    paddingHorizontal: spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: colors.platinum,
     paddingBottom: spacing.sm,
   },
+  productRowContent: {
+    paddingHorizontal: spacing.lg,
+  },
   productCard: {
+    width: 280,
     flexDirection: 'row',
     backgroundColor: colors.background,
     borderRadius: 8,
-    padding: spacing.sm,
-    marginBottom: spacing.sm,
+    padding: spacing.md,
+    marginRight: spacing.md,
     borderWidth: 1,
     borderColor: colors.platinum,
   },
   productImage: {
-    width: 60,
-    height: 60,
+    width: 80,
+    height: 80,
     borderRadius: 4,
-    marginRight: spacing.sm,
+    marginRight: spacing.md,
   },
   productInfo: {
     flex: 1,
+    justifyContent: 'space-between',
   },
   productTitle: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
-    color: colors.text,
-    marginBottom: 4,
-    lineHeight: 16,
+    color: colors.textPrimary,
+    marginBottom: 6,
+    lineHeight: 18,
   },
   productRating: {
     flexDirection: 'row',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   productPrice: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '700',
     color: colors.navy,
   },
