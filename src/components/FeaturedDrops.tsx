@@ -274,6 +274,7 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     flex: 1,
     marginRight: spacing.sm,
+    minHeight: 40, // 2 lines: lineHeight 20 * 2
   },
   stockIndicator: {
     flexDirection: 'row',

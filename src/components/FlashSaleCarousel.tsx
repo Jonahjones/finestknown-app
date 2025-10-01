@@ -387,6 +387,7 @@ const styles = StyleSheet.create({
     color: '#0E2033',
     marginBottom: 6,
     lineHeight: 18,
+    minHeight: 36, // 2 lines: 18 * 2
   },
   priceContainer: {
     flexDirection: 'row',
