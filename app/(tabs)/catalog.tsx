@@ -155,7 +155,7 @@ export default function CatalogScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.gold} />
+          <ActivityIndicator size="large" color={colors.brand} />
           <Text style={styles.loadingText}>Loading products...</Text>
           </View>
       </SafeAreaView>
@@ -180,11 +180,11 @@ export default function CatalogScreen() {
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color={colors.textSecondary} />
+        <Ionicons name="search" size={20} color={colors.text.secondary} />
         <TextInput
           style={styles.searchInput}
               placeholder="Search products..."
-          placeholderTextColor={colors.textSecondary}
+          placeholderTextColor={colors.text.secondary}
               value={searchQuery}
               onChangeText={handleSearch}
             />
@@ -202,7 +202,7 @@ export default function CatalogScreen() {
           <Ionicons 
             name={showCategoryDropdown ? "chevron-up" : "chevron-down"} 
             size={20} 
-            color={colors.navy} 
+            color={colors.text.primary} 
           />
         </TouchableOpacity>
       </View>
@@ -245,7 +245,7 @@ export default function CatalogScreen() {
                     </Text>
                   </View>
                   {selectedCategory === item.slug && (
-                    <Ionicons name="checkmark" size={20} color={colors.gold} />
+                    <Ionicons name="checkmark" size={20} color={colors.brand} />
                   )}
                 </TouchableOpacity>
               )}

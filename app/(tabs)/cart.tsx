@@ -84,7 +84,7 @@ export default function CartScreen() {
             handleQuantityChange(item.product_id, item.qty - 1);
           }}
         >
-          <Ionicons name="remove" size={16} color={colors.textPrimary} />
+          <Ionicons name="remove" size={16} color={colors.text.primary} />
         </TouchableOpacity>
         <Text style={styles.quantityText}>{item.qty}</Text>
         <TouchableOpacity
@@ -94,7 +94,7 @@ export default function CartScreen() {
             handleQuantityChange(item.product_id, item.qty + 1);
           }}
         >
-          <Ionicons name="add" size={16} color={colors.textPrimary} />
+          <Ionicons name="add" size={16} color={colors.text.primary} />
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -104,7 +104,7 @@ export default function CartScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.gold} />
+          <ActivityIndicator size="large" color={colors.brand} />
           <Text style={styles.loadingText}>Loading cart...</Text>
         </View>
       </SafeAreaView>
@@ -119,7 +119,7 @@ export default function CartScreen() {
           <Text style={styles.itemCount}>{itemCount || 0} items</Text>
         </View>
         <View style={styles.emptyContainer}>
-          <Ionicons name="bag-outline" size={64} color={colors.textSecondary} />
+          <Ionicons name="bag-outline" size={64} color={colors.text.secondary} />
           <Text style={styles.emptyTitle}>Your cart is empty</Text>
           <Text style={styles.emptySubtitle}>
             Add some precious metals to get started

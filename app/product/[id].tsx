@@ -101,14 +101,14 @@ export default function ProductDetailScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.modernHeader}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.navy} />
+            <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
           </TouchableOpacity>
           <View style={styles.headerActions}>
             <TouchableOpacity style={styles.headerButton}>
-              <Ionicons name="share-outline" size={24} color={colors.navy} />
+              <Ionicons name="share-outline" size={24} color={colors.text.primary} />
             </TouchableOpacity>
             <TouchableOpacity style={styles.headerButton}>
-              <Ionicons name="heart-outline" size={24} color={colors.navy} />
+              <Ionicons name="heart-outline" size={24} color={colors.text.primary} />
             </TouchableOpacity>
           </View>
         </View>
@@ -137,12 +137,12 @@ export default function ProductDetailScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.modernHeader}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.navy} />
+            <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
           </TouchableOpacity>
         </View>
         <View style={styles.errorContainer}>
           <View style={styles.errorIcon}>
-            <Ionicons name="alert-circle-outline" size={48} color={colors.textTertiary} />
+            <Ionicons name="alert-circle-outline" size={48} color={colors.text.muted} />
           </View>
           <Text style={styles.errorTitle}>Product Not Found</Text>
           <Text style={styles.errorText}>This item may have been removed or is no longer available.</Text>
@@ -170,11 +170,11 @@ export default function ProductDetailScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.modernHeader}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.navy} />
+          <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
         </TouchableOpacity>
         <View style={styles.headerActions}>
           <TouchableOpacity style={styles.headerButton}>
-            <Ionicons name="share-outline" size={24} color={colors.navy} />
+            <Ionicons name="share-outline" size={24} color={colors.text.primary} />
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.headerButton}
@@ -183,7 +183,7 @@ export default function ProductDetailScreen() {
             <Ionicons 
               name={isFavorite ? "heart" : "heart-outline"} 
               size={24} 
-              color={isFavorite ? colors.danger : colors.navy} 
+              color={isFavorite ? colors.danger : colors.text.primary} 
             />
           </TouchableOpacity>
         </View>
@@ -373,27 +373,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.m,
-    backgroundColor: colors.cardBackground,
-    ...shadows.e1,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.surface,
+    ...shadow.card,
   },
   backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.platinum,
+    width: touchTarget.minWidth,
+    height: touchTarget.minHeight,
+    borderRadius: radii.xl,
+    backgroundColor: colors.bg,
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerActions: {
     flexDirection: 'row',
-    gap: spacing.s,
+    gap: spacing.sm,
   },
   headerButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.platinum,
+    width: touchTarget.minWidth,
+    height: touchTarget.minHeight,
+    borderRadius: radii.xl,
+    backgroundColor: colors.bg,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -427,44 +427,42 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: spacing.m,
-    gap: spacing.s,
+    paddingVertical: spacing.md,
+    gap: spacing.sm,
   },
   dot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: colors.silver,
+    backgroundColor: colors.border,
   },
   dotActive: {
-    backgroundColor: colors.navy,
+    backgroundColor: colors.brand,
     width: 24,
     borderRadius: 4,
   },
 
   // Details Card Styles
   detailsCard: {
-    marginHorizontal: spacing.l,
-    marginBottom: spacing.m,
-    padding: spacing.l,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+    padding: spacing.lg,
+    ...shadow.card,
   },
   title: {
-    fontSize: typography.title.size,
-    lineHeight: typography.title.lineHeight,
-    fontWeight: typography.title.weight,
-    color: colors.navy,
-    marginBottom: spacing.m,
+    ...type.h2,
+    color: colors.text.primary,
+    marginBottom: spacing.md,
   },
   priceRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.m,
+    marginBottom: spacing.md,
   },
   priceTag: {
     flex: 1,
-    fontSize: typography.title.size,
-    fontWeight: typography.title.weight,
-    color: colors.navy,
+    ...type.h2,
+    color: colors.text.primary,
   },
   salePriceContainer: {
     flex: 1,
@@ -478,87 +476,75 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   salePrice: {
-    fontSize: typography.title.size,
-    fontWeight: typography.title.weight,
+    ...type.h2,
     color: colors.danger,
   },
   originalPrice: {
-    fontSize: typography.body.size,
-    fontWeight: typography.body.fontWeight,
-    color: colors.textSecondary,
+    ...type.body,
+    color: colors.text.secondary,
     textDecorationLine: 'line-through',
   },
   discountBadge: {
     backgroundColor: colors.danger,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
-    borderRadius: radius.sm,
+    borderRadius: radii.sm,
   },
   discountText: {
-    color: colors.cardBackground,
-    fontSize: typography.caption.size,
+    ...type.meta,
+    color: colors.surface,
     fontWeight: '700',
   },
   largeSoldBadge: {
-    backgroundColor: colors.ivory,
+    backgroundColor: colors.surface,
     borderWidth: 2,
-    borderColor: colors.gold,
-    borderRadius: 8,
-    paddingHorizontal: spacing.l,
-    paddingVertical: spacing.m,
-    marginLeft: spacing.m,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderColor: colors.brand,
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    marginLeft: spacing.md,
+    ...shadow.card,
   },
   largeSoldBadgeText: {
-    fontSize: typography.body.size,
-    fontWeight: typography.heading.weight,
-    color: colors.navy,
+    ...type.body,
+    fontWeight: '700',
+    color: colors.text.primary,
     textAlign: 'center',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
   stockInfo: {
-    marginBottom: spacing.s,
+    marginBottom: spacing.sm,
   },
   stockCount: {
-    fontSize: typography.body.size,
-    lineHeight: typography.body.lineHeight,
+    ...type.body,
     color: colors.success,
-    fontWeight: typography.weights.semibold,
+    fontWeight: '700',
     marginBottom: spacing.xs,
   },
   stockHint: {
-    fontSize: typography.caption.size,
-    lineHeight: typography.caption.lineHeight,
+    ...type.meta,
     color: colors.success,
-    fontWeight: typography.weights.medium,
   },
   soldHint: {
-    fontSize: typography.caption.size,
-    lineHeight: typography.caption.lineHeight,
-    color: colors.textSecondary,
-    fontWeight: typography.weights.medium,
+    ...type.meta,
+    color: colors.text.secondary,
     fontStyle: 'italic',
   },
 
   // Specifications Card Styles
   specsCard: {
-    marginHorizontal: spacing.l,
-    marginBottom: spacing.m,
-    padding: spacing.l,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+    padding: spacing.lg,
+    ...shadow.card,
   },
   sectionTitle: {
-    fontSize: typography.heading.size,
-    lineHeight: typography.heading.lineHeight,
-    fontWeight: typography.heading.weight,
-    color: colors.navy,
-    marginBottom: spacing.l,
+    ...type.h2,
+    color: colors.text.primary,
+    marginBottom: spacing.lg,
   },
   specsGrid: {
-    gap: spacing.m,
+    gap: spacing.md,
   },
   specRow: {
     flexDirection: 'row',
@@ -566,10 +552,8 @@ const styles = StyleSheet.create({
     minHeight: 24,
   },
   specLabel: {
-    fontSize: typography.body.size,
-    lineHeight: typography.body.lineHeight,
-    color: colors.textSecondary,
-    fontWeight: typography.weights.medium,
+    ...type.body,
+    color: colors.text.secondary,
     width: 80,
   },
   specValueContainer: {
@@ -578,26 +562,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   specValue: {
-    fontSize: typography.body.size,
-    lineHeight: typography.body.lineHeight,
-    color: colors.textPrimary,
+    ...type.body,
+    color: colors.text.primary,
     fontFamily: 'monospace',
     flex: 1,
   },
   specValueCopyable: {
-    color: colors.navy,
+    color: colors.brand,
     textDecorationLine: 'underline',
   },
   copyIcon: {
     fontSize: 14,
-    marginLeft: spacing.s,
+    marginLeft: spacing.sm,
   },
 
   // Trust Card Styles
   trustCard: {
-    marginHorizontal: spacing.l,
-    marginBottom: spacing.m,
-    padding: spacing.l,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+    padding: spacing.lg,
+    ...shadow.card,
   },
   trustRow: {
     flexDirection: 'row',
@@ -609,21 +593,20 @@ const styles = StyleSheet.create({
   },
   trustIcon: {
     fontSize: 24,
-    marginBottom: spacing.s,
+    marginBottom: spacing.sm,
   },
   trustText: {
-    fontSize: typography.caption.size,
-    lineHeight: typography.caption.lineHeight,
-    color: colors.textSecondary,
+    ...type.meta,
+    color: colors.text.secondary,
     textAlign: 'center',
-    fontWeight: typography.weights.medium,
   },
 
   // Population Card Styles
   populationCard: {
-    marginHorizontal: spacing.l,
-    marginBottom: spacing.m,
-    padding: spacing.l,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+    padding: spacing.lg,
+    ...shadow.card,
   },
 
   // Sticky Bottom Bar Styles
@@ -666,7 +649,7 @@ const styles = StyleSheet.create({
 
   // Loading & Error States
   skeletonSpacing: {
-    height: spacing.l,
+    height: spacing.lg,
   },
   errorContainer: {
     flex: 1,

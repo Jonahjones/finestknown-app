@@ -4,7 +4,6 @@ import { FinestKnownLogo } from '@/src/components/FinestKnownLogo';
 import { FlashSaleCarousel } from '@/src/components/FlashSaleCarousel';
 import { PriceTicker, ResourceItem, SectionHeader } from '@/src/components/home';
 import { colors, radii, shadow, spacing, type } from '@/src/theme';
-import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Animated, Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
