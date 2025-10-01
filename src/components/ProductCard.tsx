@@ -37,18 +37,12 @@ export function ProductCard({ product }: ProductCardProps) {
           )}
           
           {/* Sale/Sold Badge - top right */}
-          {isSoldOut ? (
+          {isSoldOut && (
             <View style={styles.saleBadge}>
               <Text style={styles.saleBadgeText}>SOLD</Text>
             </View>
-          ) : (
-            // Future: Add sale badge here when product has discount
-            product.stock < 5 && (
-              <View style={[styles.saleBadge, styles.lowStockBadge]}>
-                <Text style={styles.saleBadgeText}>LOW STOCK</Text>
-              </View>
-            )
           )}
+          {/* Future: Add sale badge here when product has discount */}
         </View>
         
         {/* Content */}
@@ -65,11 +59,19 @@ export function ProductCard({ product }: ProductCardProps) {
             {/* Future: Add old price with strikethrough when product has discount */}
           </View>
           
-          {/* In Stock indicator */}
+          {/* Stock indicator */}
           {!isSoldOut && (
             <View style={styles.stockRow}>
-              <View style={styles.stockDot} />
-              <Text style={styles.stockText}>In Stock</Text>
+              <View style={[
+                styles.stockDot,
+                product.stock < 5 && styles.lowStockDot
+              ]} />
+              <Text style={[
+                styles.stockText,
+                product.stock < 5 && styles.lowStockText
+              ]}>
+                {product.stock < 5 ? 'Low Stock' : 'In Stock'}
+              </Text>
             </View>
           )}
           
@@ -155,9 +157,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     borderRadius: radii.pill,
   },
-  lowStockBadge: {
-    backgroundColor: colors.danger,
-  },
   saleBadgeText: {
     ...type.meta,
     fontWeight: '700',
@@ -206,10 +205,16 @@ const styles = StyleSheet.create({
     backgroundColor: colors.success,
     marginRight: spacing.xs,
   },
+  lowStockDot: {
+    backgroundColor: colors.danger,
+  },
   stockText: {
     ...type.meta,
     color: colors.success,
     fontWeight: '700',
+  },
+  lowStockText: {
+    color: colors.danger,
   },
   
   // Add to Cart button - pill style

@@ -1,11 +1,10 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import React from 'react';
 import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { listProducts, ProductRow } from '../api/products';
 import { colors, radii, shadow, spacing, type } from '../theme';
-import { Badge, Card, SkeletonCard } from './ui';
+import { SkeletonCard } from './ui';
 
 interface FeaturedDropsProps {
   limit?: number;
@@ -36,97 +35,68 @@ export function FeaturedDrops({ limit = 6 }: FeaturedDropsProps) {
     return photos[0];
   };
 
-  const renderFeaturedItem = ({ item }: { item: ProductRow }) => (
-    <TouchableOpacity
-      onPress={() => router.push(`/product/${item.id}` as any)}
-      activeOpacity={0.9}
-      style={styles.productCard}
-    >
-      <Card elevation="e2" style={styles.featuredCard}>
-        <View style={styles.imageContainer}>
-          <Image
-            source={{ uri: getImageUrl(item.photos) }}
-            style={styles.featuredImage}
-            resizeMode="cover"
-          />
-          <View style={styles.imageOverlay}>
-            <View style={styles.badgeContainer}>
-              <Badge 
-                label="NEW" 
-                variant="outline" 
-                style={styles.newBadge}
-              />
-              {item.stock === 0 && (
-                <Badge 
-                  label="SOLD" 
-                  variant="outline" 
-                  style={styles.soldBadge}
-                />
-              )}
-            </View>
-            <View style={styles.quickActions}>
-              <TouchableOpacity style={styles.quickActionButton}>
-                <Ionicons name="heart-outline" size={20} color={colors.surface} />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.quickActionButton}>
-                <Ionicons name="eye-outline" size={20} color={colors.surface} />
-              </TouchableOpacity>
-            </View>
+  const renderFeaturedItem = ({ item }: { item: ProductRow }) => {
+    const isSoldOut = item.stock === 0;
+    const isLowStock = item.stock > 0 && item.stock < 5;
+
+    return (
+      <TouchableOpacity
+        onPress={() => router.push(`/product/${item.id}` as any)}
+        activeOpacity={0.9}
+        style={styles.productCard}
+      >
+        <View style={styles.featuredCard}>
+          <View style={styles.imageContainer}>
+            <Image
+              source={{ uri: getImageUrl(item.photos) }}
+              style={styles.featuredImage}
+              resizeMode="cover"
+            />
+            
+            {/* Category chip - top left */}
+            {item.metal && (
+              <View style={styles.categoryChip}>
+                <Text style={styles.categoryChipText}>{item.metal}</Text>
+              </View>
+            )}
+            
+            {/* Sold Badge - top right */}
+            {isSoldOut && (
+              <View style={styles.saleBadge}>
+                <Text style={styles.saleBadgeText}>SOLD</Text>
+              </View>
+            )}
           </View>
-        </View>
-        
-        <View style={styles.featuredContent}>
-          <View style={styles.titleRow}>
+          
+          <View style={styles.featuredContent}>
             <Text style={styles.featuredTitle} numberOfLines={2}>
               {item.title}
             </Text>
-            <View style={styles.stockIndicator}>
-              <Ionicons 
-                name={item.stock > 0 ? "checkmark-circle" : "close-circle"} 
-                size={16} 
-                color={item.stock > 0 ? colors.success : colors.danger} 
-              />
-              <Text style={[
-                styles.stockText,
-                { color: item.stock > 0 ? colors.success : colors.danger }
-              ]}>
-                {item.stock > 0 ? 'In Stock' : 'Sold Out'}
-              </Text>
-            </View>
-          </View>
-          
-          <View style={styles.featuredDetails}>
-            {item.metal && (
-              <View style={styles.metalTag}>
-                <Ionicons name="diamond" size={12} color={colors.brand} />
-                <Text style={styles.featuredMetal}>
-                  {item.metal.charAt(0).toUpperCase() + item.metal.slice(1)}
-                </Text>
-              </View>
-            )}
-            {item.year && (
-              <View style={styles.yearTag}>
-                <Text style={styles.featuredYear}>{item.year}</Text>
-              </View>
-            )}
-          </View>
-          
-          <View style={styles.priceRow}>
+            
             <Text style={styles.featuredPrice}>
               {formatPrice(item.price_cents)}
             </Text>
-            {item.grade && item.grader && (
-              <View style={styles.gradeContainer}>
-                <Text style={styles.featuredGrade}>
-                  {item.grader} {item.grade}
+            
+            {/* Stock indicator */}
+            {!isSoldOut && (
+              <View style={styles.stockRow}>
+                <View style={[
+                  styles.stockDot,
+                  isLowStock && styles.lowStockDot
+                ]} />
+                <Text style={[
+                  styles.stockText,
+                  isLowStock && styles.lowStockText
+                ]}>
+                  {isLowStock ? 'Low Stock' : 'In Stock'}
                 </Text>
               </View>
             )}
           </View>
         </View>
-      </Card>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   if (isLoading) {
     return (
@@ -211,9 +181,7 @@ const styles = StyleSheet.create({
   featuredCard: {
     width: 200,
     backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderRadius: radii.md,
     overflow: 'hidden',
     ...shadow.card,
   },
@@ -221,121 +189,82 @@ const styles = StyleSheet.create({
     position: 'relative',
     width: '100%',
     aspectRatio: 4/3,
+    backgroundColor: colors.border,
+    borderTopLeftRadius: radii.md,
+    borderTopRightRadius: radii.md,
   },
   featuredImage: {
     width: '100%',
     height: '100%',
   },
-  imageOverlay: {
+  categoryChip: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
-    justifyContent: 'space-between',
-    padding: spacing.md,
+    top: spacing.sm,
+    left: spacing.sm,
+    backgroundColor: colors.surface,
+    opacity: 0.9,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
   },
-  badgeContainer: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-  },
-  newBadge: {
-    backgroundColor: colors.brand,
-  },
-  soldBadge: {
-    backgroundColor: colors.danger,
-  },
-  quickActions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    alignSelf: 'flex-end',
-  },
-  quickActionButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  featuredContent: {
-    padding: spacing.sm,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: spacing.sm,
-  },
-  featuredTitle: {
-    ...type.body,
+  categoryChipText: {
+    ...type.meta,
     fontWeight: '700',
     color: colors.text.primary,
-    flex: 1,
-    marginRight: spacing.sm,
-    minHeight: 40, // 2 lines: lineHeight 20 * 2
   },
-  stockIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  stockText: {
-    ...type.meta,
-  },
-  featuredDetails: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginBottom: spacing.sm,
-    alignItems: 'center',
-  },
-  metalTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.brand + '20',
-    paddingHorizontal: spacing.sm,
+  saleBadge: {
+    position: 'absolute',
+    top: spacing.sm,
+    right: spacing.sm,
+    backgroundColor: colors.danger,
+    borderRadius: radii.pill,
+    paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
-    borderRadius: radii.sm,
-    gap: spacing.xs,
   },
-  featuredMetal: {
+  saleBadgeText: {
     ...type.meta,
-    color: colors.brand,
     fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    color: colors.surface,
   },
-  yearTag: {
-    backgroundColor: colors.bg,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radii.sm,
+  featuredContent: {
+    padding: spacing.md,
+    gap: spacing.xs,
   },
-  featuredYear: {
-    ...type.meta,
-    color: colors.text.secondary,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: spacing.sm,
+  featuredTitle: {
+    ...type.title,
+    color: colors.text.primary,
+    marginBottom: spacing.sm,
+    minHeight: 44, // 2 lines
   },
   featuredPrice: {
     ...type.title,
     color: colors.text.primary,
-  },
-  gradeContainer: {
-    backgroundColor: colors.brand + '10',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radii.sm,
-  },
-  featuredGrade: {
-    ...type.meta,
-    color: colors.brand,
     fontWeight: '700',
+    marginBottom: spacing.xs,
+  },
+  stockRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  stockDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.success,
+    marginRight: spacing.xs,
+  },
+  lowStockDot: {
+    backgroundColor: colors.danger,
+  },
+  stockText: {
+    ...type.meta,
+    color: colors.success,
+    fontWeight: '700',
+  },
+  lowStockText: {
+    color: colors.danger,
   },
   skeletonContainer: {
     flexDirection: 'row',
