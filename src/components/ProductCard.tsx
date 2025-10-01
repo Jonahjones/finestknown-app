@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ProductRow } from '../api/products';
-import { colors, radius, shadows, spacing, typography } from '../design/tokens';
+import { colors, radii, shadow, spacing, touchTarget, type } from '../theme';
 
 interface ProductCardProps {
   product: ProductRow;
@@ -99,9 +99,10 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
+    borderRadius: radii.md,
     overflow: 'hidden',
-    ...shadows.card,
+    padding: spacing.md,
+    ...shadow.card,
   },
   soldCard: {
     opacity: 0.85,
@@ -111,8 +112,11 @@ const styles = StyleSheet.create({
   imageContainer: {
     width: '100%',
     aspectRatio: 4/3,
-    backgroundColor: colors.bg,
+    backgroundColor: colors.border,
     position: 'relative',
+    borderRadius: radii.md,
+    overflow: 'hidden',
+    marginBottom: spacing.md,
   },
   image: {
     width: '100%',
@@ -125,90 +129,87 @@ const styles = StyleSheet.create({
   // Category chip - top left
   categoryChip: {
     position: 'absolute',
-    top: spacing.s,
-    left: spacing.s,
-    backgroundColor: colors.brand,
-    paddingHorizontal: spacing.s,
-    paddingVertical: 4,
-    borderRadius: radius.sm,
+    top: spacing.sm,
+    left: spacing.sm,
+    backgroundColor: colors.surface,
+    opacity: 0.9,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.pill,
   },
   categoryChipText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: colors.surface,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    ...type.meta,
+    fontWeight: '700',
+    color: colors.text.primary,
   },
   
   // Sale/Sold badge - top right
   saleBadge: {
     position: 'absolute',
-    top: spacing.s,
-    right: spacing.s,
+    top: spacing.sm,
+    right: spacing.sm,
     backgroundColor: colors.danger,
-    paddingHorizontal: spacing.s,
-    paddingVertical: 4,
-    borderRadius: radius.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.pill,
   },
   lowStockBadge: {
-    backgroundColor: colors.warning,
+    backgroundColor: colors.danger,
   },
   saleBadgeText: {
-    fontSize: 11,
+    ...type.meta,
     fontWeight: '700',
     color: colors.surface,
-    letterSpacing: 0.5,
   },
   
   // Content
   content: {
-    padding: spacing.m,
+    gap: spacing.xs,
   },
   title: {
-    fontSize: typography.body.size,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    lineHeight: 20,
-    marginBottom: spacing.s,
-    minHeight: 40, // 2 lines minimum
+    ...type.title,
+    color: colors.text.primary,
+    minHeight: 44, // 2 lines
+    marginBottom: spacing.xs,
   },
   
   // Price
   priceContainer: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    marginBottom: spacing.s,
+    gap: spacing.sm,
+    marginBottom: spacing.xs,
   },
   price: {
-    fontSize: typography.heading.size,
+    ...type.title,
+    color: colors.text.primary,
     fontWeight: '700',
-    color: colors.textPrimary,
   },
   oldPrice: {
-    fontSize: typography.body.size,
-    fontWeight: '500',
-    color: colors.textSecondary,
+    ...type.body,
+    color: colors.text.muted,
     textDecorationLine: 'line-through',
-    marginLeft: spacing.s,
   },
   
   // Stock indicator
   stockRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.m,
+    marginBottom: spacing.md,
   },
   stockDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
     backgroundColor: colors.success,
-    marginRight: 6,
+    marginRight: spacing.xs,
   },
   stockText: {
-    fontSize: typography.caption.size,
-    fontWeight: '500',
+    ...type.meta,
     color: colors.success,
+    fontWeight: '700',
   },
   
   // Add to Cart button - pill style
@@ -217,14 +218,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.brand,
-    paddingVertical: spacing.s,
-    paddingHorizontal: spacing.m,
-    borderRadius: radius.pill,
-    gap: 6,
+    paddingVertical: spacing.md,
+    borderRadius: radii.pill,
+    gap: spacing.xs,
+    minHeight: touchTarget.minHeight,
   },
   addToCartText: {
-    fontSize: typography.caption.size,
-    fontWeight: '600',
+    ...type.body,
+    fontWeight: '700',
     color: colors.surface,
   },
 });

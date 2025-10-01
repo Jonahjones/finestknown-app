@@ -2,7 +2,7 @@ import { Category, getCategoryTree } from '@/src/api/categories';
 import { listProducts, ProductRow } from '@/src/api/products';
 import { AppHeader } from '@/src/components/AppHeader';
 import { ProductCard } from '@/src/components/ProductCard';
-import { colors, radius, spacing, typography } from '@/src/design/tokens';
+import { colors, radii, shadow, spacing, type } from '@/src/theme';
 import { analytics } from '@/src/utils/analytics';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
@@ -294,26 +294,22 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.lg,
     marginBottom: spacing.md,
     paddingHorizontal: spacing.md,
-    borderRadius: radius.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    borderRadius: radii.md,
+    ...shadow.card,
   },
   searchInput: {
     flex: 1,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.sm,
-    fontSize: typography.body.size,
-    color: colors.textPrimary,
+    ...type.body,
+    color: colors.text.primary,
   },
   categoryDropdownContainer: {
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.background,
+    borderBottomColor: colors.border,
   },
   categoryDropdownButton: {
     flexDirection: 'row',
@@ -321,15 +317,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.md,
-    backgroundColor: colors.background,
-    borderRadius: 8,
+    backgroundColor: colors.bg,
+    borderRadius: radii.sm,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: colors.border,
   },
   categoryDropdownText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: colors.navy,
+    ...type.title,
+    color: colors.text.primary,
     flex: 1,
   },
   modalOverlay: {
@@ -339,16 +334,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dropdownContainer: {
-    backgroundColor: colors.white,
-    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderRadius: radii.md,
     marginHorizontal: spacing.lg,
     maxHeight: 400,
     minWidth: 280,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    ...shadow.sticky,
   },
   dropdownItem: {
     flexDirection: 'row',
@@ -357,31 +348,29 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: colors.background,
+    borderBottomColor: colors.border,
   },
   dropdownItemSelected: {
-    backgroundColor: colors.gold + '10',
+    backgroundColor: colors.bg,
   },
   dropdownItemContent: {
     flex: 1,
   },
   dropdownItemText: {
-    fontSize: 16,
-    color: colors.navy,
+    ...type.title,
+    color: colors.text.primary,
     marginBottom: 2,
   },
   dropdownItemTextSelected: {
-    fontWeight: '600',
-    color: colors.gold,
+    fontWeight: '700',
+    color: colors.brand,
   },
   dropdownItemCount: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    fontWeight: '400',
+    ...type.meta,
   },
   dropdownItemCountSelected: {
-    color: colors.gold,
-    fontWeight: '500',
+    color: colors.brand,
+    fontWeight: '700',
   },
   categoriesContainer: {
     marginBottom: spacing.lg,
@@ -392,20 +381,20 @@ const styles = StyleSheet.create({
   categoryChip: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    backgroundColor: colors.cardBackground,
-    borderRadius: 20,
+    backgroundColor: colors.surface,
+    borderRadius: radii.pill,
     marginRight: spacing.sm,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: colors.border,
   },
   categoryChipSelected: {
     backgroundColor: colors.brand,
     borderColor: colors.brand,
   },
   categoryChipText: {
-    fontSize: typography.caption.size,
-    color: colors.textPrimary,
-    fontWeight: '500',
+    ...type.meta,
+    color: colors.text.primary,
+    fontWeight: '700',
   },
   categoryChipTextSelected: {
     color: colors.surface,
@@ -428,8 +417,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    fontSize: typography.body.size,
-    color: colors.textSecondary,
+    ...type.body,
+    color: colors.text.secondary,
     marginTop: spacing.md,
   },
   errorContainer: {
@@ -439,15 +428,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   errorText: {
-    fontSize: typography.title.size,
-    color: colors.textPrimary,
-    fontWeight: '600',
+    ...type.h2,
+    color: colors.text.primary,
     marginTop: spacing.md,
     textAlign: 'center',
   },
   errorSubtext: {
-    fontSize: typography.body.size,
-    color: colors.textSecondary,
+    ...type.body,
+    color: colors.text.secondary,
     marginTop: spacing.sm,
     textAlign: 'center',
   },

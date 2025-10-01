@@ -1,8 +1,8 @@
 import { getCurrentSalePrice } from '@/src/api/discounts';
 import { getProduct } from '@/src/api/products';
 import { Button, Card, SkeletonImage, SkeletonText } from '@/src/components/ui';
-import { colors, radius, shadows, spacing, typography } from '@/src/design/tokens';
 import { useAddToCartMutation } from '@/src/hooks/useCart';
+import { colors, radii, shadow, spacing, touchTarget, type } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -404,7 +404,7 @@ const styles = StyleSheet.create({
   // Image Gallery Styles
   imageGallery: {
     backgroundColor: colors.bg,
-    marginBottom: spacing.m,
+    marginBottom: spacing.lg,
   },
   imageScroller: {
     height: imageHeight,
@@ -415,12 +415,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.bg,
-    paddingHorizontal: spacing.l,
+    paddingHorizontal: spacing.lg,
   },
   image: {
     width: '100%',
     height: '100%',
-    borderRadius: radius.lg,
+    borderRadius: radii.lg,
     backgroundColor: colors.bg,
   },
   dotIndicators: {
@@ -630,11 +630,13 @@ const styles = StyleSheet.create({
   stickyBottomBar: {
     flexDirection: 'row',
     backgroundColor: colors.surface,
-    paddingHorizontal: spacing.l,
+    paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
-    paddingBottom: spacing.xl,
-    gap: spacing.m,
-    ...shadows.sticky,
+    paddingBottom: spacing.xxl,
+    gap: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    ...shadow.sticky,
   },
   addToCartButton: {
     flex: 1,
@@ -644,16 +646,17 @@ const styles = StyleSheet.create({
   },
   soldBottomBar: {
     backgroundColor: colors.surface,
-    paddingHorizontal: spacing.l,
+    paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
-    paddingBottom: spacing.xl,
+    paddingBottom: spacing.xxl,
     alignItems: 'center',
-    ...shadows.sticky,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    ...shadow.sticky,
   },
   soldMessage: {
-    fontSize: typography.body.size,
-    lineHeight: typography.body.lineHeight,
-    color: colors.textSecondary,
+    ...type.body,
+    color: colors.text.secondary,
     textAlign: 'center',
     fontStyle: 'italic',
   },
@@ -675,36 +678,34 @@ const styles = StyleSheet.create({
   errorIcon: {
     width: 80,
     height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.platinum,
+    borderRadius: radii.xl,
+    backgroundColor: colors.border,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: spacing.l,
+    marginBottom: spacing.lg,
   },
   errorTitle: {
-    fontSize: typography.title.size,
-    lineHeight: typography.title.lineHeight,
-    fontWeight: typography.title.weight,
-    color: colors.navy,
+    ...type.h2,
+    color: colors.text.primary,
     textAlign: 'center',
-    marginBottom: spacing.s,
+    marginBottom: spacing.sm,
   },
   errorText: {
-    fontSize: typography.body.size,
-    lineHeight: typography.body.lineHeight,
-    color: colors.textSecondary,
+    ...type.body,
+    color: colors.text.secondary,
     textAlign: 'center',
     marginBottom: spacing.xl,
   },
   errorButton: {
-    backgroundColor: colors.navy,
+    backgroundColor: colors.brand,
     paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.m,
-    borderRadius: radius.md,
+    paddingVertical: spacing.lg,
+    borderRadius: radii.pill,
+    minHeight: touchTarget.minHeight,
   },
   errorButtonText: {
-    fontSize: typography.body.size,
-    fontWeight: typography.weights.semibold,
-    color: colors.ivory,
+    ...type.title,
+    fontWeight: '700',
+    color: colors.surface,
   },
 });

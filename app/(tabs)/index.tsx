@@ -2,7 +2,8 @@ import { AppHeader } from '@/src/components/AppHeader';
 import { FeaturedDrops } from '@/src/components/FeaturedDrops';
 import { FinestKnownLogo } from '@/src/components/FinestKnownLogo';
 import { FlashSaleCarousel } from '@/src/components/FlashSaleCarousel';
-import { colors, spacing, typography } from '@/src/design/tokens';
+import { PriceTicker, ResourceItem, SectionHeader } from '@/src/components/home';
+import { colors, radii, shadow, spacing, type } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -79,28 +80,21 @@ export default function HomeScreen() {
     router.push(`/catalog?category=${categoryId}`);
   };
 
-  const renderCategoryItem = ({ item }: { item: any }) => (
-    <TouchableOpacity 
-      style={styles.categoryItem} 
-      onPress={() => handleCategoryPress(item.id)}
-    >
-      <View style={styles.categoryIcon}>
-        <Ionicons name={item.icon as any} size={24} color={colors.gold} />
-      </View>
-      <Text style={styles.categoryName}>{item.name}</Text>
-      <Text style={styles.categoryCount}>{item.count} items</Text>
-    </TouchableOpacity>
-  );
-
   return (
     <SafeAreaView style={styles.container}>
         <AppHeader title="Finest Known" showLivePrices={true} />
       <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Price Ticker */}
+        <PriceTicker items={[
+          { label: 'Gold', value: '$2,345', change: '+2.3%' },
+          { label: 'Silver', value: '$28.50', change: '-0.5%' },
+          { label: 'Platinum', value: '$1,023', change: '+1.2%' },
+        ]} />
+
         {/* Hero Section with Typing Animation */}
         <View style={styles.heroSection}>
           <View style={styles.heroContent}>
-            <FinestKnownLogo size="large" showText={true} />
-            <Text style={styles.websiteText}>Finestknown.com</Text>
+            <FinestKnownLogo size="large" showText={false} />
             <View style={styles.typingContainer}>
               <Text style={styles.heroTitle} numberOfLines={1} adjustsFontSizeToFit>
                 {displayedText}
@@ -118,50 +112,39 @@ export default function HomeScreen() {
 
         {/* Latest Products */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Latest Products</Text>
-            <Text style={styles.sectionSubtitle}>Newest additions to our collection</Text>
-          </View>
+          <SectionHeader 
+            title="Latest Products" 
+            subtitle="Newest additions to our collection"
+            ctaText="View All"
+            onCtaPress={() => router.push('/catalog')}
+          />
           <View style={styles.latestProductsGrid}>
-            {categories.map((category) => {
-              const metalIcons = {
-                'Gold': 'medal',
-                'Silver': 'medal-outline', 
-                'Platinum': 'trophy',
-                'Palladium': 'trophy-outline',
-                'Copper': 'flame',
-                'Rhodium': 'diamond'
-              };
-              const metalColors = {
-                'Gold': '#FFD700',
-                'Silver': '#C0C0C0',
-                'Platinum': '#E5E4E2', 
-                'Palladium': '#B4B4B4',
-                'Copper': '#B87333',
-                'Rhodium': '#A0A0A0'
-              };
-              
-              return (
-                <TouchableOpacity 
-                  key={`latest-${category.id}`} 
-                  style={styles.latestProductItem} 
-                  onPress={() => handleCategoryPress(category.id)}
-                >
-                  <View style={styles.latestProductImage}>
-                    <Ionicons 
-                      name={metalIcons[category.name as keyof typeof metalIcons] as any} 
-                      size={24} 
-                      color={metalColors[category.name as keyof typeof metalColors]} 
-                    />
-                  </View>
-                  <View style={styles.latestProductInfo}>
-                    <Text style={styles.latestProductName}>{category.name} Collection</Text>
-                    <Text style={styles.latestProductPrice}>From $299</Text>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
+            {categories.map((category) => (
+              <TouchableOpacity 
+                key={`latest-${category.id}`} 
+                style={styles.latestProductItem} 
+                onPress={() => handleCategoryPress(category.id)}
+              >
+                <Text style={styles.latestProductName}>{category.name} Collection</Text>
+                <Text style={styles.latestProductPrice}>From $299</Text>
+              </TouchableOpacity>
+            ))}
           </View>
+        </View>
+
+        {/* Resources Section */}
+        <View style={styles.section}>
+          <SectionHeader title="Resources" subtitle="Learn more about precious metals" />
+          <ResourceItem 
+            title="Investing in Gold" 
+            description="Complete guide to gold investments"
+            onPress={() => router.push('/resources/about')}
+          />
+          <ResourceItem 
+            title="Coin Grading Guide" 
+            description="Understanding coin grades and values"
+            onPress={() => router.push('/resources/about')}
+          />
         </View>
 
       </ScrollView>
@@ -172,13 +155,13 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F0',
+    backgroundColor: colors.bg,
   },
   heroSection: {
-    backgroundColor: colors.background,
-    paddingVertical: spacing.l,
+    backgroundColor: colors.surface,
+    paddingVertical: spacing.xxl,
     paddingHorizontal: spacing.xl,
-    marginBottom: spacing.l,
+    marginBottom: spacing.lg,
   },
   heroContent: {
     alignItems: 'center',
@@ -190,131 +173,49 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
-    marginTop: spacing.s,
+    marginTop: spacing.md,
   },
   heroTitle: {
     fontSize: 48,
     fontWeight: '700',
-    color: colors.text,
+    color: colors.text.primary,
     textAlign: 'center',
   },
   cursor: {
-    color: colors.gold,
+    color: colors.brand,
     fontSize: 48,
     fontWeight: '700',
   },
-  heroSubtitle: {
-    fontSize: 18,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: spacing.xl,
-    lineHeight: 24,
-  },
-  heroButtons: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-  },
-  primaryButton: {
-    backgroundColor: colors.gold,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-    borderRadius: 8,
-    minWidth: 160,
-  },
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  secondaryButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: colors.gold,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-    borderRadius: 8,
-    minWidth: 160,
-  },
-  secondaryButtonText: {
-    color: colors.gold,
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
   section: {
-    marginTop: spacing.xl,
+    marginTop: spacing.lg,
     paddingHorizontal: spacing.lg,
-  },
-  sectionHeader: {
     marginBottom: spacing.lg,
-  },
-  sectionTitle: {
-    ...typography.title,
-    color: colors.text,
-    fontWeight: '700',
-  },
-  sectionSubtitle: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    marginTop: spacing.xs,
-  },
-  featuredList: {
-    paddingRight: spacing.lg,
   },
   // Latest Products
   latestProductsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    gap: spacing.md,
   },
   latestProductItem: {
     width: (width - spacing.lg * 2 - spacing.md) / 2,
-    backgroundColor: colors.background,
-    borderRadius: 8,
+    backgroundColor: colors.surface,
+    borderRadius: radii.md,
     padding: spacing.md,
-    marginBottom: spacing.md,
     borderWidth: 1,
-    borderColor: colors.platinum,
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  latestProductImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 6,
-    backgroundColor: colors.gold + '10',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: spacing.sm,
-  },
-  latestProductInfo: {
-    flex: 1,
+    borderColor: colors.border,
+    ...shadow.card,
+    gap: spacing.xs,
   },
   latestProductName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.text,
+    ...type.body,
+    fontWeight: '700',
+    color: colors.text.primary,
     marginBottom: 2,
   },
   latestProductPrice: {
-    fontSize: 12,
-    color: colors.gold,
-    fontWeight: '500',
-  },
-  websiteText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.gold,
-    textAlign: 'center',
-    marginTop: spacing.s,
-    letterSpacing: 0.5,
+    ...type.meta,
+    color: colors.brand,
+    fontWeight: '700',
   },
 });

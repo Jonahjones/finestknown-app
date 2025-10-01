@@ -7,8 +7,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HapticTab } from '../../components/haptic-tab';
 import TabBarBackground from '../../components/ui/tab-bar-background';
 import { useColorScheme } from '../../hooks/use-color-scheme';
-import { colors, radius, typography } from '../../src/design/tokens';
 import { useCartItemCount } from '../../src/hooks/useCart';
+import { colors, radii, type } from '../../src/theme';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -18,10 +18,10 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: colors.textPrimary,
-        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarActiveTintColor: colors.text.primary,
+        tabBarInactiveTintColor: colors.text.secondary,
         tabBarLabelStyle: {
-          fontSize: typography.caption.size,
+          fontSize: type.meta.fontSize,
           fontWeight: '600',
         },
         headerShown: false,
@@ -31,7 +31,7 @@ export default function TabLayout() {
           ios: {
             position: 'absolute',
             backgroundColor: colors.surface,
-            borderTopColor: colors.cardBorder,
+            borderTopColor: colors.border,
             borderTopWidth: 1,
             height: 90,
             paddingBottom: 20,
@@ -39,7 +39,7 @@ export default function TabLayout() {
           },
           default: {
             backgroundColor: colors.surface,
-            borderTopColor: colors.cardBorder,
+            borderTopColor: colors.border,
             borderTopWidth: 1,
             height: 50 + insets.bottom,
             paddingBottom: Math.max(insets.bottom, 4),
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
     top: -6,
     right: -8,
     backgroundColor: colors.danger,
-    borderRadius: radius.sm,
+    borderRadius: radii.pill,
     minWidth: 18,
     height: 18,
     justifyContent: 'center',
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
   badgeText: {
     color: colors.surface,
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: '700',
     textAlign: 'center',
   },
 });
