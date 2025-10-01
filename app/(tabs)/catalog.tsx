@@ -1,0 +1,508 @@
+import { Category, getCategoryTree } from '@/src/api/categories';
+import { listProducts, ProductRow } from '@/src/api/products';
+import { AppHeader } from '@/src/components/AppHeader';
+import { colors, spacing, typography } from '@/src/design/tokens';
+import { analytics } from '@/src/utils/analytics';
+import { Ionicons } from '@expo/vector-icons';
+import { useQuery } from '@tanstack/react-query';
+import { router } from 'expo-router';
+import React, { useCallback, useState } from 'react';
+import {
+    ActivityIndicator,
+    Dimensions,
+    FlatList,
+    Image,
+    Modal,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+const { width } = Dimensions.get('window');
+
+export default function CatalogScreen() {
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+
+  // Fetch categories from database
+  const { data: categoryTree, isLoading: categoriesLoading } = useQuery({
+    queryKey: ['categories'],
+    queryFn: getCategoryTree,
+  });
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['products', { category: selectedCategory }],
+    queryFn: () => listProducts({ 
+      categorySlug: selectedCategory === 'all' ? undefined : selectedCategory 
+    }),
+  });
+
+  const handleCategoryPress = useCallback((categoryId: string) => {
+    setSelectedCategory(categoryId);
+    analytics.track('category_selected', { category: categoryId });
+  }, []);
+
+  const handleCategorySelect = useCallback((categorySlug: string) => {
+    setSelectedCategory(categorySlug);
+    setShowCategoryDropdown(false);
+    analytics.track('category_selected', { category: categorySlug });
+  }, []);
+
+  const handleProductPress = useCallback((productId: string) => {
+    analytics.track('product_viewed', { productId });
+    router.push(`/product/${productId}`);
+  }, []);
+
+  const handleSearch = useCallback((query: string) => {
+    setSearchQuery(query);
+    analytics.track('search_performed', { query });
+  }, []);
+
+  // Get product counts for each category
+  const { data: categoryCounts } = useQuery({
+    queryKey: ['categoryCounts'],
+    queryFn: async () => {
+      if (!categoryTree) return {};
+      
+      const counts: { [key: string]: number } = {};
+      
+      // Get count for "All" category
+      const allProducts = await listProducts({ pageSize: 1 });
+      counts['all'] = allProducts.count || 0;
+      
+      // Get counts for each category
+      const flattenCategories = (categories: (Category & { children?: Category[] })[]): Category[] => {
+        const result: Category[] = [];
+        const addCategory = (cat: Category & { children?: Category[] }) => {
+          result.push(cat);
+          if (cat.children) {
+            cat.children.forEach(addCategory);
+          }
+        };
+        categories.forEach(addCategory);
+        return result;
+      };
+      
+      const flatCategories = flattenCategories(categoryTree);
+      
+      for (const category of flatCategories) {
+        try {
+          const products = await listProducts({ 
+            categorySlug: category.slug, 
+            pageSize: 1 
+          });
+          counts[category.slug] = products.count || 0;
+        } catch (error) {
+          console.error(`Error getting count for category ${category.slug}:`, error);
+          counts[category.slug] = 0;
+        }
+      }
+      
+      return counts;
+    },
+    enabled: !!categoryTree,
+  });
+
+  // Flatten category tree for display
+  const flattenCategories = (categories: (Category & { children?: Category[] })[]): Category[] => {
+    const result: Category[] = [];
+    const addCategory = (cat: Category & { children?: Category[] }) => {
+      result.push(cat);
+      if (cat.children) {
+        cat.children.forEach(addCategory);
+      }
+    };
+    categories.forEach(addCategory);
+    return result;
+  };
+
+  const categories = categoryTree ? [
+    { id: 'all', name: 'All', slug: 'all', parent_id: null, sort_order: 0 },
+    ...flattenCategories(categoryTree)
+  ] : [];
+
+  const renderProduct = ({ item }: { item: ProductRow }) => (
+    <TouchableOpacity
+      style={styles.productCard}
+      onPress={() => handleProductPress(item.id)}
+    >
+      <Image source={{ uri: item.photos[0] || 'https://via.placeholder.com/300x200/F8F7F4/C9D1D9?text=No+Image' }} style={styles.productImage} />
+      <View style={styles.productContent}>
+        <Text style={styles.productTitle} numberOfLines={2}>
+          {item.title}
+        </Text>
+        <Text style={styles.productMetal}>{item.metal || 'Unknown'}</Text>
+        <View style={styles.productFooter}>
+          <Text style={styles.productPrice}>${item.price_cents / 100}</Text>
+          {item.stock > 0 && (
+            <Text style={styles.stockText}>In Stock</Text>
+          )}
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+
+  const renderCategory = ({ item }: { item: Category & { id: string; name: string; slug: string } }) => (
+        <TouchableOpacity
+          style={[
+        styles.categoryChip,
+        selectedCategory === item.slug && styles.categoryChipSelected,
+      ]}
+      onPress={() => handleCategoryPress(item.slug)}
+    >
+            <Text
+              style={[
+          styles.categoryChipText,
+          selectedCategory === item.slug && styles.categoryChipTextSelected,
+        ]}
+      >
+        {item.name}
+            </Text>
+        </TouchableOpacity>
+  );
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.gold} />
+          <Text style={styles.loadingText}>Loading products...</Text>
+          </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle" size={48} color={colors.danger} />
+          <Text style={styles.errorText}>Failed to load products</Text>
+          <Text style={styles.errorSubtext}>Please try again later</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+        <AppHeader title="Catalog" showLivePrices={true} />
+
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <Ionicons name="search" size={20} color={colors.textSecondary} />
+        <TextInput
+          style={styles.searchInput}
+              placeholder="Search products..."
+          placeholderTextColor={colors.textSecondary}
+              value={searchQuery}
+              onChangeText={handleSearch}
+            />
+          </View>
+
+      {/* Category Dropdown */}
+      <View style={styles.categoryDropdownContainer}>
+        <TouchableOpacity
+          style={styles.categoryDropdownButton}
+          onPress={() => setShowCategoryDropdown(!showCategoryDropdown)}
+        >
+          <Text style={styles.categoryDropdownText}>
+            {categories.find(cat => cat.slug === selectedCategory)?.name || 'All Categories'}
+          </Text>
+          <Ionicons 
+            name={showCategoryDropdown ? "chevron-up" : "chevron-down"} 
+            size={20} 
+            color={colors.navy} 
+          />
+        </TouchableOpacity>
+      </View>
+
+      {/* Category Dropdown Modal */}
+      <Modal
+        visible={showCategoryDropdown}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCategoryDropdown(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowCategoryDropdown(false)}
+        >
+          <View style={styles.dropdownContainer}>
+            <FlatList
+              data={categories}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.dropdownItem,
+                    selectedCategory === item.slug && styles.dropdownItemSelected
+                  ]}
+                  onPress={() => handleCategorySelect(item.slug)}
+                >
+                  <View style={styles.dropdownItemContent}>
+                    <Text style={[
+                      styles.dropdownItemText,
+                      selectedCategory === item.slug && styles.dropdownItemTextSelected
+                    ]}>
+                      {item.name}
+                    </Text>
+                    <Text style={[
+                      styles.dropdownItemCount,
+                      selectedCategory === item.slug && styles.dropdownItemCountSelected
+                    ]}>
+                      {categoryCounts?.[item.slug] || 0} items
+                    </Text>
+                  </View>
+                  {selectedCategory === item.slug && (
+                    <Ionicons name="checkmark" size={20} color={colors.gold} />
+                  )}
+                </TouchableOpacity>
+              )}
+              keyExtractor={(item) => item.id}
+              showsVerticalScrollIndicator={false}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Categories */}
+      <View style={styles.categoriesContainer}>
+        <FlatList
+          data={categories}
+          renderItem={renderCategory}
+          keyExtractor={(item) => item.id}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoriesList}
+        />
+      </View>
+
+      {/* Products Grid */}
+          <FlatList
+            data={data?.items || []}
+            renderItem={renderProduct}
+            keyExtractor={(item) => item.id}
+            numColumns={2}
+        contentContainerStyle={styles.productsGrid}
+            columnWrapperStyle={styles.productRow}
+        showsVerticalScrollIndicator={false}
+      />
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.cardBackground,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
+    ...typography.body,
+    color: colors.text,
+  },
+  categoryDropdownContainer: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.background,
+  },
+  categoryDropdownButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.background,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+  },
+  categoryDropdownText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.navy,
+    flex: 1,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dropdownContainer: {
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    marginHorizontal: spacing.lg,
+    maxHeight: 400,
+    minWidth: 280,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.background,
+  },
+  dropdownItemSelected: {
+    backgroundColor: colors.gold + '10',
+  },
+  dropdownItemContent: {
+    flex: 1,
+  },
+  dropdownItemText: {
+    fontSize: 16,
+    color: colors.navy,
+    marginBottom: 2,
+  },
+  dropdownItemTextSelected: {
+    fontWeight: '600',
+    color: colors.gold,
+  },
+  dropdownItemCount: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontWeight: '400',
+  },
+  dropdownItemCountSelected: {
+    color: colors.gold,
+    fontWeight: '500',
+  },
+  categoriesContainer: {
+    marginBottom: spacing.lg,
+  },
+  categoriesList: {
+    paddingHorizontal: spacing.lg,
+  },
+  categoryChip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.cardBackground,
+    borderRadius: 20,
+    marginRight: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+  },
+  categoryChipSelected: {
+    backgroundColor: colors.gold,
+    borderColor: colors.gold,
+  },
+  categoryChipText: {
+    ...typography.caption,
+    color: colors.text,
+    fontWeight: '500',
+  },
+  categoryChipTextSelected: {
+    color: colors.cardBackground,
+  },
+  productsGrid: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xl,
+  },
+  productRow: {
+    justifyContent: 'space-between',
+  },
+  productCard: {
+    width: (width - spacing.lg * 2 - spacing.sm) / 2,
+    backgroundColor: colors.cardBackground,
+    borderRadius: 16,
+    marginBottom: spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    overflow: 'hidden',
+  },
+  productImage: {
+    width: '100%',
+    height: 150,
+  },
+  productContent: {
+    padding: spacing.md,
+  },
+  productTitle: {
+    ...typography.heading,
+    color: colors.text,
+    fontWeight: '600',
+    marginBottom: spacing.xs,
+  },
+  productMetal: {
+    ...typography.caption,
+    color: colors.gold,
+    marginBottom: spacing.sm,
+  },
+  productFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  productPrice: {
+    ...typography.title,
+    color: colors.text,
+    fontWeight: '700',
+  },
+  stockText: {
+    ...typography.caption,
+    color: colors.success,
+    fontWeight: '500',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    ...typography.body,
+    color: colors.textSecondary,
+    marginTop: spacing.md,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+  },
+  errorText: {
+    ...typography.title,
+    color: colors.text,
+    fontWeight: '600',
+    marginTop: spacing.md,
+    textAlign: 'center',
+  },
+  errorSubtext: {
+    ...typography.body,
+    color: colors.textSecondary,
+    marginTop: spacing.sm,
+    textAlign: 'center',
+  },
+});
