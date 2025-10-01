@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import React from 'react';
 import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { listProducts, ProductRow } from '../api/products';
-import { colors, radius, shadows, spacing, typography } from '../design/tokens';
+import { colors, radii, shadow, spacing, type } from '../theme';
 import { Badge, Card, SkeletonCard } from './ui';
 
 interface FeaturedDropsProps {
@@ -66,10 +66,10 @@ export function FeaturedDrops({ limit = 6 }: FeaturedDropsProps) {
             </View>
             <View style={styles.quickActions}>
               <TouchableOpacity style={styles.quickActionButton}>
-                <Ionicons name="heart-outline" size={20} color={colors.ivory} />
+                <Ionicons name="heart-outline" size={20} color={colors.surface} />
               </TouchableOpacity>
               <TouchableOpacity style={styles.quickActionButton}>
-                <Ionicons name="eye-outline" size={20} color={colors.ivory} />
+                <Ionicons name="eye-outline" size={20} color={colors.surface} />
               </TouchableOpacity>
             </View>
           </View>
@@ -98,7 +98,7 @@ export function FeaturedDrops({ limit = 6 }: FeaturedDropsProps) {
           <View style={styles.featuredDetails}>
             {item.metal && (
               <View style={styles.metalTag}>
-                <Ionicons name="diamond" size={12} color={colors.gold} />
+                <Ionicons name="diamond" size={12} color={colors.brand} />
                 <Text style={styles.featuredMetal}>
                   {item.metal.charAt(0).toUpperCase() + item.metal.slice(1)}
                 </Text>
@@ -179,47 +179,44 @@ export function FeaturedDrops({ limit = 6 }: FeaturedDropsProps) {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: spacing.xl,
-    marginBottom: spacing.xxl,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.xl,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.l,
+    marginBottom: spacing.lg,
   },
   title: {
-    fontSize: typography.title.size,
-    lineHeight: typography.title.lineHeight,
-    fontWeight: typography.title.weight,
-    color: colors.navy,
+    ...type.h2,
+    color: colors.text.primary,
   },
   viewAllButton: {
-    paddingVertical: spacing.s,
-    paddingHorizontal: spacing.m,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
   },
   viewAllText: {
-    fontSize: typography.body.size,
-    lineHeight: typography.body.lineHeight,
-    fontWeight: typography.weights.medium,
-    color: colors.navy,
+    ...type.body,
+    fontWeight: '700',
+    color: colors.brand,
   },
   featuredList: {
     paddingLeft: 0,
-    paddingRight: spacing.l,
+    paddingRight: spacing.lg,
   },
   productCard: {
-    marginRight: spacing.m,
+    marginRight: spacing.md,
   },
   featuredCard: {
     width: 200,
-    height: 380, // Fixed height
-    backgroundColor: colors.cardBackground,
-    borderRadius: radius.lg,
+    height: 380,
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: colors.border,
     overflow: 'hidden',
-    ...shadows.e2,
+    ...shadow.card,
   },
   imageContainer: {
     position: 'relative',
@@ -237,21 +234,21 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: 'rgba(0, 0, 0, 0.1)',
     justifyContent: 'space-between',
-    padding: spacing.m,
+    padding: spacing.md,
   },
   badgeContainer: {
     flexDirection: 'row',
     gap: spacing.xs,
   },
   newBadge: {
-    backgroundColor: colors.gold,
+    backgroundColor: colors.brand,
   },
   soldBadge: {
     backgroundColor: colors.danger,
   },
   quickActions: {
     flexDirection: 'row',
-    gap: spacing.s,
+    gap: spacing.sm,
     alignSelf: 'flex-end',
   },
   quickActionButton: {
@@ -264,24 +261,21 @@ const styles = StyleSheet.create({
   },
   featuredContent: {
     flex: 1,
-    padding: spacing.l,
+    padding: spacing.md,
     justifyContent: 'space-between',
   },
   titleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: spacing.s,
-    height: 40, // Fixed height
+    marginBottom: spacing.sm,
   },
   featuredTitle: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: typography.weights.semibold,
-    color: colors.navy,
+    ...type.body,
+    fontWeight: '700',
+    color: colors.text.primary,
     flex: 1,
-    marginRight: spacing.s,
-    height: 36, // Fixed height for 2 lines
+    marginRight: spacing.sm,
   },
   stockIndicator: {
     flexDirection: 'row',
@@ -289,74 +283,64 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   stockText: {
-    fontSize: typography.caption.size,
-    lineHeight: typography.caption.lineHeight,
-    fontWeight: typography.weights.medium,
+    ...type.meta,
   },
   featuredDetails: {
     flexDirection: 'row',
-    gap: spacing.s,
-    marginBottom: spacing.s,
-    height: 28, // Fixed height
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
     alignItems: 'center',
   },
   metalTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.gold + '20',
-    paddingHorizontal: spacing.s,
+    backgroundColor: colors.brand + '20',
+    paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
-    borderRadius: radius.sm,
+    borderRadius: radii.sm,
     gap: spacing.xs,
   },
   featuredMetal: {
-    fontSize: typography.caption.size,
-    lineHeight: typography.caption.lineHeight,
-    color: colors.gold,
-    fontWeight: typography.weights.semibold,
+    ...type.meta,
+    color: colors.brand,
+    fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   yearTag: {
-    backgroundColor: colors.platinum,
-    paddingHorizontal: spacing.s,
+    backgroundColor: colors.bg,
+    paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
-    borderRadius: radius.sm,
+    borderRadius: radii.sm,
   },
   featuredYear: {
-    fontSize: typography.caption.size,
-    lineHeight: typography.caption.lineHeight,
-    color: colors.textSecondary,
-    fontWeight: typography.weights.medium,
+    ...type.meta,
+    color: colors.text.secondary,
   },
   priceRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    height: 32, // Fixed height
-    marginTop: 'auto', // Push to bottom
+    marginTop: 'auto',
   },
   featuredPrice: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: typography.heading.weight,
-    color: colors.navy,
+    ...type.title,
+    color: colors.text.primary,
   },
   gradeContainer: {
-    backgroundColor: colors.navy + '10',
-    paddingHorizontal: spacing.s,
+    backgroundColor: colors.brand + '10',
+    paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
-    borderRadius: radius.sm,
+    borderRadius: radii.sm,
   },
   featuredGrade: {
-    fontSize: typography.caption.size,
-    lineHeight: typography.caption.lineHeight,
-    color: colors.navy,
-    fontWeight: typography.weights.semibold,
+    ...type.meta,
+    color: colors.brand,
+    fontWeight: '700',
   },
   skeletonContainer: {
     flexDirection: 'row',
-    gap: spacing.m,
+    gap: spacing.md,
   },
   skeletonCard: {
     width: 200,
@@ -367,9 +351,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyText: {
-    fontSize: typography.body.size,
-    lineHeight: typography.body.lineHeight,
-    color: colors.textSecondary,
+    ...type.body,
+    color: colors.text.secondary,
     fontStyle: 'italic',
   },
 });

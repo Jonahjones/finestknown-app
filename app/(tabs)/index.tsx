@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg,
   },
   heroSection: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.bg,
     paddingVertical: spacing.xxl,
     paddingHorizontal: spacing.xl,
     marginBottom: spacing.lg,

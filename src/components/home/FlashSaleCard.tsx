@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     ...type.title,
     color: colors.text.primary,
     marginBottom: spacing.sm,
-    minHeight: 48,
+    height: 44,
   },
   priceRow: {
     flexDirection: 'row',
