@@ -230,7 +230,7 @@ export function FlashSaleCarousel({ onEmpty }: FlashSaleCarouselProps) {
                 price={Math.round(item.salePrice * 100)}
                 oldPrice={Math.round(item.basePrice * 100)}
                 size="medium"
-                showDiscount={true}
+                showDiscount={false}
               />
               
               <View style={styles.countdown}>
