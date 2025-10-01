@@ -1,11 +1,11 @@
+import { listProducts } from '@/src/api/products';
 import { AppHeader } from '@/src/components/AppHeader';
 import { FeaturedDrops } from '@/src/components/FeaturedDrops';
 import { FinestKnownLogo } from '@/src/components/FinestKnownLogo';
 import { FlashSaleCarousel } from '@/src/components/FlashSaleCarousel';
 import { ProductCard } from '@/src/components/ProductCard';
 import { ResourceItem, SectionHeader } from '@/src/components/home';
-import { listProducts } from '@/src/api/products';
-import { colors, radii, shadow, spacing, type } from '@/src/theme';
+import { colors, spacing } from '@/src/theme';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
