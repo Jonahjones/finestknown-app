@@ -2,8 +2,8 @@ import { listCartItems } from '@/src/api/cart';
 import { fetchLivePrices } from '@/src/api/pricing';
 import { FinestKnownLogo } from '@/src/components/FinestKnownLogo';
 import { Card } from '@/src/components/ui';
-import { colors } from '@/src/theme';
-import { shadows, spacing, typography } from '@/src/design/tokens';
+import { colors as themeColors } from '@/src/theme';
+import { colors, shadows, spacing, typography } from '@/src/design/tokens';
 import { useIsAdmin } from '@/src/hooks/useIsAdmin';
 import { useAuth } from '@/src/store/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
@@ -235,13 +235,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ title, style, showLivePric
                         } 
                         size={16} 
                         color={
-                          price.metal === 'Gold' ? colors.metal.gold :
-                          price.metal === 'Silver' ? colors.metal.silver :
-                          price.metal === 'Platinum' ? colors.metal.platinum :
-                          price.metal === 'Palladium' ? colors.metal.palladium :
-                          price.metal === 'Copper' ? colors.metal.copper :
-                          price.metal === 'Rhodium' ? colors.metal.rhodium :
-                          colors.brand
+                          price.metal === 'Gold' ? themeColors.metal.gold :
+                          price.metal === 'Silver' ? themeColors.metal.silver :
+                          price.metal === 'Platinum' ? themeColors.metal.platinum :
+                          price.metal === 'Palladium' ? themeColors.metal.palladium :
+                          price.metal === 'Copper' ? themeColors.metal.copper :
+                          price.metal === 'Rhodium' ? themeColors.metal.rhodium :
+                          colors.gold
                         } 
                       />
                       <Text style={styles.livePriceMetal}>{price.metal}</Text>
@@ -265,13 +265,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ title, style, showLivePric
                         } 
                         size={16} 
                         color={
-                          price.metal === 'Gold' ? colors.metal.gold :
-                          price.metal === 'Silver' ? colors.metal.silver :
-                          price.metal === 'Platinum' ? colors.metal.platinum :
-                          price.metal === 'Palladium' ? colors.metal.palladium :
-                          price.metal === 'Copper' ? colors.metal.copper :
-                          price.metal === 'Rhodium' ? colors.metal.rhodium :
-                          colors.brand
+                          price.metal === 'Gold' ? themeColors.metal.gold :
+                          price.metal === 'Silver' ? themeColors.metal.silver :
+                          price.metal === 'Platinum' ? themeColors.metal.platinum :
+                          price.metal === 'Palladium' ? themeColors.metal.palladium :
+                          price.metal === 'Copper' ? themeColors.metal.copper :
+                          price.metal === 'Rhodium' ? themeColors.metal.rhodium :
+                          colors.gold
                         } 
                       />
                       <Text style={styles.livePriceMetal}>{price.metal}</Text>
@@ -417,7 +417,7 @@ const styles = StyleSheet.create({
     fontSize: typography.title.size,
     lineHeight: typography.title.lineHeight,
     fontWeight: typography.title.weight,
-    color: colors.text,
+    color: colors.textPrimary,
     flex: 1,
     textAlign: 'center',
     marginLeft: 12,
@@ -503,7 +503,7 @@ const styles = StyleSheet.create({
     fontSize: typography.body.size,
     lineHeight: typography.body.lineHeight,
     fontWeight: typography.weights.semibold,
-    color: colors.text,
+    color: colors.textPrimary,
     marginBottom: spacing.xs,
   },
   userStatus: {
@@ -534,7 +534,7 @@ const styles = StyleSheet.create({
     fontSize: typography.body.size,
     lineHeight: typography.body.lineHeight,
     fontWeight: typography.weights.medium,
-    color: colors.text,
+    color: colors.textPrimary,
     marginBottom: spacing.xs,
   },
   menuItemDescription: {
@@ -609,7 +609,7 @@ const styles = StyleSheet.create({
   livePriceMetal: {
     fontSize: typography.caption.size,
     fontWeight: typography.weights.semibold,
-    color: colors.text,
+    color: colors.textPrimary,
     marginLeft: spacing.xs,
     marginRight: spacing.sm,
   },
