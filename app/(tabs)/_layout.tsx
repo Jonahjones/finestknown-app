@@ -18,11 +18,11 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: colors.navy,
+        tabBarActiveTintColor: colors.textPrimary,
         tabBarInactiveTintColor: colors.textSecondary,
         tabBarLabelStyle: {
-          ...typography.caption,
-          fontWeight: '500',
+          fontSize: typography.caption.size,
+          fontWeight: '600',
         },
         headerShown: false,
         tabBarButton: HapticTab,
@@ -30,7 +30,7 @@ export default function TabLayout() {
         tabBarStyle: Platform.select({
           ios: {
             position: 'absolute',
-            backgroundColor: colors.cardBackground,
+            backgroundColor: colors.surface,
             borderTopColor: colors.cardBorder,
             borderTopWidth: 1,
             height: 90,
@@ -38,7 +38,7 @@ export default function TabLayout() {
             paddingTop: 10,
           },
           default: {
-            backgroundColor: colors.cardBackground,
+            backgroundColor: colors.surface,
             borderTopColor: colors.cardBorder,
             borderTopWidth: 1,
             height: 50 + insets.bottom,
@@ -52,11 +52,14 @@ export default function TabLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ color, focused, size }) => (
-            <Ionicons 
-              name={focused ? 'home' : 'home-outline'} 
-              size={size || 24} 
-              color={color} 
-            />
+            <View style={styles.tabIconContainer}>
+              <Ionicons 
+                name={focused ? 'home' : 'home-outline'} 
+                size={size || 24} 
+                color={color} 
+              />
+              {focused && <View style={styles.activeIndicator} />}
+            </View>
           ),
         }}
       />
@@ -65,11 +68,14 @@ export default function TabLayout() {
         options={{
           title: 'Catalog',
           tabBarIcon: ({ color, focused, size }) => (
-            <Ionicons 
-              name={focused ? 'grid' : 'grid-outline'} 
-              size={size || 24} 
-              color={color} 
-            />
+            <View style={styles.tabIconContainer}>
+              <Ionicons 
+                name={focused ? 'grid' : 'grid-outline'} 
+                size={size || 24} 
+                color={color} 
+              />
+              {focused && <View style={styles.activeIndicator} />}
+            </View>
           ),
         }}
       />
@@ -78,19 +84,22 @@ export default function TabLayout() {
         options={{
           title: 'Cart',
           tabBarIcon: ({ color, focused, size }) => (
-            <View style={{ position: 'relative' }}>
-              <Ionicons 
-                name={focused ? 'cart' : 'cart-outline'} 
-                size={size || 24} 
-                color={color} 
-              />
-              {cartItemCount > 0 && (
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>
-                    {cartItemCount > 99 ? '99+' : cartItemCount}
-                  </Text>
-                </View>
-              )}
+            <View style={styles.tabIconContainer}>
+              <View style={{ position: 'relative' }}>
+                <Ionicons 
+                  name={focused ? 'cart' : 'cart-outline'} 
+                  size={size || 24} 
+                  color={color} 
+                />
+                {cartItemCount > 0 && (
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>
+                      {cartItemCount > 99 ? '99+' : cartItemCount}
+                    </Text>
+                  </View>
+                )}
+              </View>
+              {focused && <View style={styles.activeIndicator} />}
             </View>
           ),
         }}
@@ -100,11 +109,14 @@ export default function TabLayout() {
         options={{
           title: 'Resources',
           tabBarIcon: ({ color, focused, size }) => (
-            <Ionicons 
-              name={focused ? 'analytics' : 'analytics-outline'} 
-              size={size || 24} 
-              color={color} 
-            />
+            <View style={styles.tabIconContainer}>
+              <Ionicons 
+                name={focused ? 'analytics' : 'analytics-outline'} 
+                size={size || 24} 
+                color={color} 
+              />
+              {focused && <View style={styles.activeIndicator} />}
+            </View>
           ),
         }}
       />
@@ -113,6 +125,18 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
+  tabIconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activeIndicator: {
+    position: 'absolute',
+    bottom: -8,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.brand,
+  },
   badge: {
     position: 'absolute',
     top: -6,
@@ -126,7 +150,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   badgeText: {
-    color: colors.cardBackground,
+    color: colors.surface,
     fontSize: 10,
     fontWeight: 'bold',
     textAlign: 'center',

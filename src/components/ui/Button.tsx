@@ -1,12 +1,12 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import {
-    ActivityIndicator,
-    StyleSheet,
-    Text,
-    TextStyle,
-    TouchableOpacity,
-    ViewStyle
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TextStyle,
+  TouchableOpacity,
+  ViewStyle
 } from 'react-native';
 import { colors, motion, radius, spacing, typography } from '../../design/tokens';
 
@@ -103,7 +103,7 @@ export function Button({
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
     minWidth: 44,
@@ -111,12 +111,12 @@ const styles = StyleSheet.create({
   
   // Variants
   primary: {
-    backgroundColor: colors.navy,
+    backgroundColor: colors.brand,
   },
   secondary: {
-    backgroundColor: colors.platinum,
+    backgroundColor: colors.bg,
     borderWidth: 1,
-    borderColor: colors.silver,
+    borderColor: colors.textSecondary,
   },
   ghost: {
     backgroundColor: 'transparent',
@@ -159,16 +159,18 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   primaryText: {
-    color: colors.ivory,
+    color: colors.surface,
+    fontWeight: typography.weights.semibold,
   },
   secondaryText: {
-    color: colors.navy,
+    color: colors.textPrimary,
+    fontWeight: typography.weights.medium,
   },
   ghostText: {
-    color: colors.navy,
+    color: colors.textPrimary,
   },
   ctaText: {
-    color: colors.navy,
+    color: colors.textPrimary,
     fontWeight: typography.weights.semibold,
   },
   

@@ -1,45 +1,55 @@
 // Luxury Design Tokens for Finest Known
 
 export const colors = {
-  // Core palette
+  // New design system tokens
+  bg: '#F7F6F3',
+  surface: '#FFFFFF',
+  brand: '#C8A34A',
+  text: {
+    primary: '#0E1013',
+    secondary: '#6B7280',
+    tertiary: '#9CA3AF',
+  },
+  success: '#178A50',
+  danger: '#D33A2C',
+  
+  // Core palette (legacy support)
   navy: '#0B1B2B',
   midnight: '#0E2033', 
   ivory: '#F8F7F4',
   platinum: '#E6E8EC',
   silver: '#C9D1D9',
-  gold: '#C8A75E',
+  gold: '#C8A34A', // Updated to match brand
   
   // Enhanced card colors for better contrast
   cardBackground: '#FFFFFF',
   cardBorder: '#D1D5DB',
   cardBorderHover: '#9CA3AF',
   
-  // Status colors
-  success: '#0FA47A',
-  danger: '#D14343',
+  // Status colors (legacy)
   info: '#3B82F6',
   warning: '#F59E0B',
   
-  // Text hierarchy
-  text: '#0E2033',
+  // Text hierarchy (legacy flat structure)
+  textPrimary: '#0E1013',
   textSecondary: '#6B7280',
   textTertiary: '#9CA3AF',
   
   // Legacy support
   white: '#FFFFFF',
   black: '#000000',
-  background: '#F8F7F4', // Maps to ivory
-  slate: '#6B7280', // Maps to textSecondary
-  charcoal: '#0E2033', // Maps to text
-  red: '#D14343', // Maps to danger
+  background: '#F7F6F3', // Updated to match bg
+  slate: '#6B7280',
+  charcoal: '#0E1013', // Updated to match text.primary
+  red: '#D33A2C', // Updated to match danger
 };
 
 export const typography = {
   display: { size: 28, lineHeight: 34, weight: '700' as const },
   title: { size: 22, lineHeight: 28, weight: '700' as const },
   heading: { size: 18, lineHeight: 24, weight: '600' as const },
-  body: { size: 15, lineHeight: 22, weight: '500' as const },
-  caption: { size: 13, lineHeight: 18, weight: '500' as const },
+  body: { size: 15, lineHeight: 22, weight: '500' as const, fontWeight: '500' as const },
+  caption: { size: 13, lineHeight: 18, weight: '500' as const, fontWeight: '500' as const },
   
   // Legacy support
   sizes: {
@@ -64,8 +74,6 @@ export const typography = {
   // Legacy styles
   h1: { fontSize: 28, fontWeight: '700' as const },
   h2: { fontSize: 22, fontWeight: '700' as const },
-  body: { fontSize: 15, fontWeight: '500' as const },
-  caption: { fontSize: 13, fontWeight: '500' as const },
 };
 
 export const spacing = {
@@ -83,12 +91,30 @@ export const spacing = {
 };
 
 export const radius = {
-  sm: 12,
-  md: 16,
-  lg: 24,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  pill: 999,
 };
 
 export const shadows = {
+  // New design system shadows
+  card: {
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 6,
+    shadowOpacity: 0.08,
+    shadowColor: '#000000',
+    elevation: 3,
+  },
+  sticky: {
+    shadowOffset: { width: 0, height: -4 },
+    shadowRadius: 12,
+    shadowOpacity: 0.15,
+    shadowColor: '#000000',
+    elevation: 8,
+  },
+  
+  // Legacy elevation system
   e1: {
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 8,
@@ -143,10 +169,10 @@ export const motion = {
 
 // Legacy exports for backward compatibility
 export const borderRadius = {
-  sm: 12,
-  md: 16,
-  lg: 24,
-  xl: 32,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
   pill: 999,
 };
 

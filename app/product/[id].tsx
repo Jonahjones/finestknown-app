@@ -8,16 +8,16 @@ import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    Alert,
-    Clipboard,
-    Dimensions,
-    Image,
-    Linking,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Alert,
+  Clipboard,
+  Dimensions,
+  Image,
+  Linking,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -160,8 +160,6 @@ export default function ProductDetailScreen() {
   const images = getImageUrls(product.photos);
   const specs = [
     { label: 'Metal', value: product.metal ? product.metal.charAt(0).toUpperCase() + product.metal.slice(1) : null },
-    { label: 'Fineness', value: product.fineness },
-    { label: 'Weight', value: product.weight },
     { label: 'Year', value: product.year?.toString() },
     { label: 'Grade', value: product.grade && product.grader ? `${product.grader} ${product.grade}` : product.grade },
     { label: 'Cert #', value: product.cert_number, copyable: true },
@@ -367,7 +365,7 @@ export default function ProductDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.ivory,
+    backgroundColor: colors.bg,
   },
   // Modern Header
   modernHeader: {
@@ -405,7 +403,7 @@ const styles = StyleSheet.create({
 
   // Image Gallery Styles
   imageGallery: {
-    backgroundColor: colors.ivory,
+    backgroundColor: colors.bg,
     marginBottom: spacing.m,
   },
   imageScroller: {
@@ -416,12 +414,14 @@ const styles = StyleSheet.create({
     height: imageHeight,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.ivory,
+    backgroundColor: colors.bg,
+    paddingHorizontal: spacing.l,
   },
   image: {
-    width: screenWidth - (spacing.l * 2),
-    height: imageHeight - (spacing.l * 2),
-    backgroundColor: colors.ivory,
+    width: '100%',
+    height: '100%',
+    borderRadius: radius.lg,
+    backgroundColor: colors.bg,
   },
   dotIndicators: {
     flexDirection: 'row',
@@ -526,7 +526,7 @@ const styles = StyleSheet.create({
   stockCount: {
     fontSize: typography.body.size,
     lineHeight: typography.body.lineHeight,
-    color: colors.green,
+    color: colors.success,
     fontWeight: typography.weights.semibold,
     marginBottom: spacing.xs,
   },
@@ -580,7 +580,7 @@ const styles = StyleSheet.create({
   specValue: {
     fontSize: typography.body.size,
     lineHeight: typography.body.lineHeight,
-    color: colors.text,
+    color: colors.textPrimary,
     fontFamily: 'monospace',
     flex: 1,
   },
@@ -629,13 +629,12 @@ const styles = StyleSheet.create({
   // Sticky Bottom Bar Styles
   stickyBottomBar: {
     flexDirection: 'row',
-    backgroundColor: colors.ivory,
+    backgroundColor: colors.surface,
     paddingHorizontal: spacing.l,
-    paddingTop: spacing.m,
-    paddingBottom: spacing.l,
-    borderTopWidth: 1,
-    borderTopColor: colors.silver,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xl,
     gap: spacing.m,
+    ...shadows.sticky,
   },
   addToCartButton: {
     flex: 1,
@@ -644,13 +643,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   soldBottomBar: {
-    backgroundColor: colors.ivory,
+    backgroundColor: colors.surface,
     paddingHorizontal: spacing.l,
-    paddingTop: spacing.m,
-    paddingBottom: spacing.l,
-    borderTopWidth: 1,
-    borderTopColor: colors.silver,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xl,
     alignItems: 'center',
+    ...shadows.sticky,
   },
   soldMessage: {
     fontSize: typography.body.size,

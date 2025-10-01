@@ -1,17 +1,17 @@
-import { colors, spacing, typography } from '@/src/design/tokens';
+import { colors, radius, shadows, spacing, typography } from '@/src/design/tokens';
 import { useCartItemCount, useCartQuery, useRemoveFromCartMutation, useUpdateCartQuantityMutation } from '@/src/hooks/useCart';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    Image,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -57,49 +57,46 @@ export default function CartScreen() {
     <TouchableOpacity 
       style={styles.cartItem}
       onPress={() => handleItemPress(item.product_id)}
+      activeOpacity={0.7}
     >
-      <Image source={{ uri: item.products?.photos[0] || 'https://via.placeholder.com/300x200/F8F7F4/C9D1D9?text=No+Image' }} style={styles.itemImage} />
+      {/* Thumbnail - 72px */}
+      <Image 
+        source={{ uri: item.products?.photos[0] || 'https://via.placeholder.com/72/F7F6F3/C8A34A?text=No+Image' }} 
+        style={styles.itemImage} 
+      />
+      
+      {/* Name + Price Stack */}
       <View style={styles.itemContent}>
         <Text style={styles.itemTitle} numberOfLines={2}>
           {item.products?.title || 'Unknown Product'}
         </Text>
-        <Text style={styles.itemMetal}>Precious Metal</Text>
-        <View style={styles.itemFooter}>
-          <Text style={styles.itemPrice}>
-            ${(item.price_snapshot_cents / 100).toFixed(2)}
-          </Text>
-          <View style={styles.quantityContainer}>
-            <TouchableOpacity
-              style={styles.quantityButton}
-              onPress={(e) => {
-                e.stopPropagation();
-                handleQuantityChange(item.product_id, item.qty - 1);
-              }}
-            >
-              <Ionicons name="remove" size={16} color={colors.text} />
-            </TouchableOpacity>
-            <Text style={styles.quantityText}>{item.qty}</Text>
-            <TouchableOpacity
-              style={styles.quantityButton}
-              onPress={(e) => {
-                e.stopPropagation();
-                handleQuantityChange(item.product_id, item.qty + 1);
-              }}
-            >
-              <Ionicons name="add" size={16} color={colors.text} />
-            </TouchableOpacity>
-          </View>
-        </View>
+        <Text style={styles.itemPrice}>
+          ${(item.price_snapshot_cents / 100).toFixed(2)}
+        </Text>
       </View>
-      <TouchableOpacity
-        style={styles.removeButton}
-        onPress={(e) => {
-          e.stopPropagation();
-          handleRemoveItem(item.product_id);
-        }}
-      >
-        <Ionicons name="trash" size={20} color={colors.danger} />
-      </TouchableOpacity>
+      
+      {/* Quantity Stepper - Right */}
+      <View style={styles.quantityContainer}>
+        <TouchableOpacity
+          style={styles.quantityButton}
+          onPress={(e) => {
+            e.stopPropagation();
+            handleQuantityChange(item.product_id, item.qty - 1);
+          }}
+        >
+          <Ionicons name="remove" size={16} color={colors.textPrimary} />
+        </TouchableOpacity>
+        <Text style={styles.quantityText}>{item.qty}</Text>
+        <TouchableOpacity
+          style={styles.quantityButton}
+          onPress={(e) => {
+            e.stopPropagation();
+            handleQuantityChange(item.product_id, item.qty + 1);
+          }}
+        >
+          <Ionicons name="add" size={16} color={colors.textPrimary} />
+        </TouchableOpacity>
+      </View>
     </TouchableOpacity>
   );
 
@@ -174,7 +171,7 @@ export default function CartScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.bg,
   },
   header: {
     flexDirection: 'row',
@@ -182,68 +179,60 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
+    backgroundColor: colors.surface,
   },
   title: {
-    ...typography.title,
-    color: colors.text,
+    fontSize: typography.title.size,
+    color: colors.textPrimary,
     fontWeight: '700',
   },
   itemCount: {
-    ...typography.caption,
+    fontSize: typography.caption.size,
     color: colors.textSecondary,
   },
   cartList: {
     paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
     paddingBottom: 100, // Space for checkout bar
   },
   cartItem: {
     flexDirection: 'row',
-    backgroundColor: colors.cardBackground,
-    borderRadius: 16,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.m,
+    marginBottom: spacing.m,
+    ...shadows.card,
   },
   itemImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 12,
-    marginRight: spacing.md,
+    width: 72,
+    height: 72,
+    borderRadius: radius.sm,
+    backgroundColor: colors.bg,
   },
   itemContent: {
     flex: 1,
+    marginLeft: spacing.m,
+    marginRight: spacing.m,
   },
   itemTitle: {
-    ...typography.heading,
-    color: colors.text,
+    fontSize: typography.body.size,
+    color: colors.textPrimary,
     fontWeight: '600',
-    marginBottom: spacing.xs,
-  },
-  itemMetal: {
-    ...typography.caption,
-    color: colors.gold,
-    marginBottom: spacing.sm,
-  },
-  itemFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    marginBottom: 6,
+    lineHeight: 20,
   },
   itemPrice: {
-    ...typography.title,
-    color: colors.text,
+    fontSize: typography.heading.size,
+    color: colors.textPrimary,
     fontWeight: '700',
   },
   quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.ivory,
-    borderRadius: 8,
-    paddingHorizontal: spacing.sm,
+    backgroundColor: colors.bg,
+    borderRadius: radius.sm,
+    paddingHorizontal: 4,
   },
   quantityButton: {
     width: 32,
@@ -252,55 +241,50 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   quantityText: {
-    ...typography.body,
-    color: colors.text,
+    fontSize: typography.body.size,
+    color: colors.textPrimary,
     fontWeight: '600',
-    marginHorizontal: spacing.sm,
-  },
-  removeButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: spacing.sm,
+    minWidth: 24,
+    textAlign: 'center',
   },
   checkoutContainer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: colors.cardBackground,
+    backgroundColor: colors.surface,
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.cardBorder,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xl,
+    ...shadows.sticky,
   },
   totalContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.md,
+    marginBottom: spacing.m,
   },
   totalLabel: {
-    ...typography.title,
-    color: colors.text,
+    fontSize: typography.heading.size,
+    color: colors.textSecondary,
     fontWeight: '600',
   },
   totalAmount: {
-    ...typography.title,
-    color: colors.text,
+    fontSize: typography.title.size,
+    color: colors.textPrimary,
     fontWeight: '700',
   },
   checkoutButton: {
-    backgroundColor: colors.gold,
-    borderRadius: 12,
-    paddingVertical: spacing.md,
+    backgroundColor: colors.brand,
+    borderRadius: radius.pill,
+    paddingVertical: spacing.lg,
     alignItems: 'center',
   },
   checkoutButtonText: {
-    ...typography.heading,
-    color: colors.cardBackground,
-    fontWeight: '600',
+    fontSize: typography.heading.size,
+    color: colors.surface,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   loadingContainer: {
     flex: 1,
@@ -308,7 +292,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    ...typography.body,
+    fontSize: typography.body.size,
     color: colors.textSecondary,
     marginTop: spacing.md,
   },
@@ -319,28 +303,29 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   emptyTitle: {
-    ...typography.title,
-    color: colors.text,
+    fontSize: typography.title.size,
+    color: colors.textPrimary,
     fontWeight: '600',
     marginTop: spacing.lg,
     textAlign: 'center',
   },
   emptySubtitle: {
-    ...typography.body,
+    fontSize: typography.body.size,
     color: colors.textSecondary,
     marginTop: spacing.sm,
     textAlign: 'center',
   },
   shopButton: {
-    backgroundColor: colors.gold,
-    borderRadius: 12,
+    backgroundColor: colors.brand,
+    borderRadius: radius.pill,
     paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-    marginTop: spacing.lg,
+    paddingVertical: spacing.lg,
+    marginTop: spacing.xl,
   },
   shopButtonText: {
-    ...typography.heading,
-    color: colors.cardBackground,
-    fontWeight: '600',
+    fontSize: typography.heading.size,
+    color: colors.surface,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
 });

@@ -1,27 +1,28 @@
 import { Category, getCategoryTree } from '@/src/api/categories';
 import { listProducts, ProductRow } from '@/src/api/products';
 import { AppHeader } from '@/src/components/AppHeader';
-import { colors, spacing, typography } from '@/src/design/tokens';
+import { ProductCard } from '@/src/components/ProductCard';
+import { colors, radius, spacing, typography } from '@/src/design/tokens';
 import { analytics } from '@/src/utils/analytics';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
-    ActivityIndicator,
-    Dimensions,
-    FlatList,
-    Image,
-    Modal,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Dimensions,
+  FlatList,
+  Modal,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
+const GUTTER = 12; // 12px gutter between columns
 
 export default function CatalogScreen() {
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -126,24 +127,9 @@ export default function CatalogScreen() {
   ] : [];
 
   const renderProduct = ({ item }: { item: ProductRow }) => (
-    <TouchableOpacity
-      style={styles.productCard}
-      onPress={() => handleProductPress(item.id)}
-    >
-      <Image source={{ uri: item.photos[0] || 'https://via.placeholder.com/300x200/F8F7F4/C9D1D9?text=No+Image' }} style={styles.productImage} />
-      <View style={styles.productContent}>
-        <Text style={styles.productTitle} numberOfLines={2}>
-          {item.title}
-        </Text>
-        <Text style={styles.productMetal}>{item.metal || 'Unknown'}</Text>
-        <View style={styles.productFooter}>
-          <Text style={styles.productPrice}>${item.price_cents / 100}</Text>
-          {item.stock > 0 && (
-            <Text style={styles.stockText}>In Stock</Text>
-          )}
-        </View>
-      </View>
-    </TouchableOpacity>
+    <View style={styles.productCardWrapper}>
+      <ProductCard product={item} />
+    </View>
   );
 
   const renderCategory = ({ item }: { item: Category & { id: string; name: string; slug: string } }) => (
@@ -283,13 +269,13 @@ export default function CatalogScreen() {
       </View>
 
       {/* Products Grid */}
-          <FlatList
-            data={data?.items || []}
-            renderItem={renderProduct}
-            keyExtractor={(item) => item.id}
-            numColumns={2}
+      <FlatList
+        data={data?.items || []}
+        renderItem={renderProduct}
+        keyExtractor={(item) => item.id}
+        numColumns={2}
         contentContainerStyle={styles.productsGrid}
-            columnWrapperStyle={styles.productRow}
+        columnWrapperStyle={styles.productRow}
         showsVerticalScrollIndicator={false}
       />
     </SafeAreaView>
@@ -299,19 +285,19 @@ export default function CatalogScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.bg,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.cardBackground,
+    backgroundColor: colors.surface,
     marginHorizontal: spacing.lg,
     marginBottom: spacing.md,
     paddingHorizontal: spacing.md,
-    borderRadius: 12,
+    borderRadius: radius.md,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.06,
     shadowRadius: 4,
     elevation: 2,
   },
@@ -319,8 +305,8 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.sm,
-    ...typography.body,
-    color: colors.text,
+    fontSize: typography.body.size,
+    color: colors.textPrimary,
   },
   categoryDropdownContainer: {
     paddingHorizontal: spacing.lg,
@@ -413,16 +399,16 @@ const styles = StyleSheet.create({
     borderColor: colors.cardBorder,
   },
   categoryChipSelected: {
-    backgroundColor: colors.gold,
-    borderColor: colors.gold,
+    backgroundColor: colors.brand,
+    borderColor: colors.brand,
   },
   categoryChipText: {
-    ...typography.caption,
-    color: colors.text,
+    fontSize: typography.caption.size,
+    color: colors.textPrimary,
     fontWeight: '500',
   },
   categoryChipTextSelected: {
-    color: colors.cardBackground,
+    color: colors.surface,
   },
   productsGrid: {
     paddingHorizontal: spacing.lg,
@@ -430,51 +416,11 @@ const styles = StyleSheet.create({
   },
   productRow: {
     justifyContent: 'space-between',
+    gap: GUTTER,
+    marginBottom: GUTTER,
   },
-  productCard: {
-    width: (width - spacing.lg * 2 - spacing.sm) / 2,
-    backgroundColor: colors.cardBackground,
-    borderRadius: 16,
-    marginBottom: spacing.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-    overflow: 'hidden',
-  },
-  productImage: {
-    width: '100%',
-    height: 150,
-  },
-  productContent: {
-    padding: spacing.md,
-  },
-  productTitle: {
-    ...typography.heading,
-    color: colors.text,
-    fontWeight: '600',
-    marginBottom: spacing.xs,
-  },
-  productMetal: {
-    ...typography.caption,
-    color: colors.gold,
-    marginBottom: spacing.sm,
-  },
-  productFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  productPrice: {
-    ...typography.title,
-    color: colors.text,
-    fontWeight: '700',
-  },
-  stockText: {
-    ...typography.caption,
-    color: colors.success,
-    fontWeight: '500',
+  productCardWrapper: {
+    width: (width - spacing.lg * 2 - GUTTER) / 2,
   },
   loadingContainer: {
     flex: 1,
@@ -482,7 +428,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    ...typography.body,
+    fontSize: typography.body.size,
     color: colors.textSecondary,
     marginTop: spacing.md,
   },
@@ -493,14 +439,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   errorText: {
-    ...typography.title,
-    color: colors.text,
+    fontSize: typography.title.size,
+    color: colors.textPrimary,
     fontWeight: '600',
     marginTop: spacing.md,
     textAlign: 'center',
   },
   errorSubtext: {
-    ...typography.body,
+    fontSize: typography.body.size,
     color: colors.textSecondary,
     marginTop: spacing.sm,
     textAlign: 'center',
