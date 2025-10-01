@@ -2,22 +2,17 @@ import { AppHeader } from '@/src/components/AppHeader';
 import { FeaturedDrops } from '@/src/components/FeaturedDrops';
 import { FinestKnownLogo } from '@/src/components/FinestKnownLogo';
 import { FlashSaleCarousel } from '@/src/components/FlashSaleCarousel';
+import { ProductCard } from '@/src/components/ProductCard';
 import { ResourceItem, SectionHeader } from '@/src/components/home';
+import { listProducts } from '@/src/api/products';
 import { colors, radii, shadow, spacing, type } from '@/src/theme';
+import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Animated, Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Animated, Dimensions, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
-
-// Categories data
-const categories = [
-  { id: '1', name: 'Gold', count: 24, icon: 'diamond' },
-  { id: '2', name: 'Silver', count: 18, icon: 'diamond' },
-  { id: '3', name: 'Platinum', count: 12, icon: 'diamond' },
-  { id: '4', name: 'Palladium', count: 8, icon: 'diamond' },
-];
 
 // Typing animation titles
 const typingTitles = [
@@ -35,6 +30,16 @@ export default function HomeScreen() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showCursor, setShowCursor] = useState(true);
   const fadeAnim = useState(new Animated.Value(0))[0];
+
+  // Fetch latest 5 products
+  const { data: latestProductsData, isLoading: isLoadingLatest } = useQuery({
+    queryKey: ['latest-products-home'],
+    queryFn: () => listProducts({ 
+      page: 1, 
+      pageSize: 5, 
+      sort: 'newest'
+    }),
+  });
 
   useEffect(() => {
     const typeText = () => {
@@ -75,10 +80,6 @@ export default function HomeScreen() {
     }).start();
   }, []);
 
-  const handleCategoryPress = (categoryId: string) => {
-    router.push(`/catalog?category=${categoryId}`);
-  };
-
   return (
     <SafeAreaView style={styles.container}>
         <AppHeader title="Finest Known" showLivePrices={true} />
@@ -110,18 +111,19 @@ export default function HomeScreen() {
             ctaText="View All"
             onCtaPress={() => router.push('/catalog')}
           />
-          <View style={styles.latestProductsGrid}>
-            {categories.map((category) => (
-              <TouchableOpacity 
-                key={`latest-${category.id}`} 
-                style={styles.latestProductItem} 
-                onPress={() => handleCategoryPress(category.id)}
-              >
-                <Text style={styles.latestProductName}>{category.name} Collection</Text>
-                <Text style={styles.latestProductPrice}>From $299</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          {isLoadingLatest ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color={colors.brand} />
+            </View>
+          ) : (
+            <View style={styles.latestProductsGrid}>
+              {latestProductsData?.items?.slice(0, 5).map((product) => (
+                <View key={product.id} style={styles.productCardWrapper}>
+                  <ProductCard product={product} />
+                </View>
+              ))}
+            </View>
+          )}
         </View>
 
         {/* Resources Section */}
@@ -187,27 +189,14 @@ const styles = StyleSheet.create({
   latestProductsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    justifyContent: 'space-between',
     gap: spacing.md,
   },
-  latestProductItem: {
+  productCardWrapper: {
     width: (width - spacing.lg * 2 - spacing.md) / 2,
-    backgroundColor: colors.surface,
-    borderRadius: radii.md,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...shadow.card,
-    gap: spacing.xs,
   },
-  latestProductName: {
-    ...type.body,
-    fontWeight: '700',
-    color: colors.text.primary,
-    marginBottom: 2,
-  },
-  latestProductPrice: {
-    ...type.meta,
-    color: colors.brand,
-    fontWeight: '700',
+  loadingContainer: {
+    paddingVertical: spacing.xl,
+    alignItems: 'center',
   },
 });
