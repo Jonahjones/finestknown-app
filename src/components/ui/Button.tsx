@@ -8,8 +8,8 @@ import {
   TouchableOpacity,
   ViewStyle
 } from 'react-native';
-import { colors as themeColors } from '../../theme';
 import { colors, motion, radius, spacing, typography } from '../../design/tokens';
+import { colors as themeColors } from '../../theme';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'cta';
 export type ButtonSize = 'medium' | 'large' | 'xlarge';
