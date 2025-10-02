@@ -1,8 +1,13 @@
+import { listArticles } from '@/src/api/articles';
 import { AppHeader } from '@/src/components/AppHeader';
 import { colors, spacing } from '@/src/design/tokens';
 import { Ionicons } from '@expo/vector-icons';
+import { useQuery } from '@tanstack/react-query';
+import { router } from 'expo-router';
 import React from 'react';
 import {
+    ActivityIndicator,
+    Image,
     ScrollView,
     StyleSheet,
     Text,
@@ -11,69 +16,37 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const NEWS_ARTICLES = [
-  {
-    id: '1',
-    title: 'Historic Gold Coin Discovery at Ancient Site',
-    date: '2024-01-15',
-    excerpt: 'Archaeologists uncover rare Byzantine gold coins dating back to the 6th century...',
-    category: 'Archaeology'
-  },
-  {
-    id: '2',
-    title: 'Record-Breaking Silver Dollar Sells for $12 Million',
-    date: '2024-01-12',
-    excerpt: 'A pristine 1893-S Morgan Silver Dollar sets new auction record...',
-    category: 'Auctions'
-  },
-  {
-    id: '3',
-    title: 'New Gold Investment Trends for 2024',
-    date: '2024-01-10',
-    excerpt: 'Experts predict continued growth in precious metals investment...',
-    category: 'Investment'
-  },
-  {
-    id: '4',
-    title: 'Rare Double Eagle Found in Estate Sale',
-    date: '2024-01-08',
-    excerpt: 'Family discovers valuable 1933 Double Eagle in grandfather\'s collection...',
-    category: 'Discovery'
-  },
-  {
-    id: '5',
-    title: 'Platinum Market Shows Strong Performance',
-    date: '2024-01-05',
-    excerpt: 'Platinum prices reach new highs amid industrial demand...',
-    category: 'Market News'
-  }
-];
-
 export default function RareCoinNewsPage() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['articles'],
+    queryFn: () => listArticles({ limit: 20 }),
+  });
+
+  const articles = data?.articles || [];
+
   const handleArticlePress = (articleId: string) => {
-    // Navigate to full article
-    console.log('Navigate to article:', articleId);
+    router.push(`/article/${articleId}`);
   };
 
-  const renderNewsItem = ({ item }: { item: any }) => (
-    <TouchableOpacity
-      style={styles.newsItem}
-      onPress={() => handleArticlePress(item.id)}
-    >
-      <View style={styles.newsContent}>
-        <View style={styles.newsHeader}>
-          <Text style={styles.newsCategory}>{item.category}</Text>
-          <Text style={styles.newsDate}>{item.date}</Text>
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <AppHeader title="Rare Coin News" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.gold} />
         </View>
-        <Text style={styles.newsTitle}>{item.title}</Text>
-        <Text style={styles.newsExcerpt}>{item.excerpt}</Text>
-        <View style={styles.newsFooter}>
-          <Text style={styles.readMore}>Read More</Text>
-          <Ionicons name="chevron-forward" size={16} color={colors.gold} />
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -81,23 +54,49 @@ export default function RareCoinNewsPage() {
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={styles.title}>Rare Coin News</Text>
-          <Text style={styles.subtitle}>Stay updated with the latest developments in numismatics and precious metals</Text>
+          <Text style={styles.title}>Rare Coin News & Articles</Text>
+          <Text style={styles.subtitle}>Expert insights, market analysis, and educational content</Text>
         </View>
 
         <View style={styles.newsList}>
-          {NEWS_ARTICLES.map((article) => (
-            <View key={article.id}>
-              {renderNewsItem({ item: article })}
-            </View>
+          {articles.map((article) => (
+            <TouchableOpacity
+              key={article.id}
+              style={styles.newsItem}
+              onPress={() => handleArticlePress(article.id)}
+              activeOpacity={0.7}
+            >
+              {article.cover_url && (
+                <Image 
+                  source={{ uri: article.cover_url }} 
+                  style={styles.newsImage}
+                  resizeMode="cover"
+                />
+              )}
+              <View style={styles.newsContent}>
+                <View style={styles.newsHeader}>
+                  <Text style={styles.newsCategory}>{article.category}</Text>
+                  <Text style={styles.newsDate}>{formatDate(article.published_at)}</Text>
+                </View>
+                <Text style={styles.newsTitle} numberOfLines={2}>{article.title}</Text>
+                {article.excerpt && (
+                  <Text style={styles.newsExcerpt} numberOfLines={2}>{article.excerpt}</Text>
+                )}
+                <View style={styles.newsFooter}>
+                  <Text style={styles.readMore}>{article.read_minutes} min read</Text>
+                  <Ionicons name="chevron-forward" size={16} color={colors.gold} />
+                </View>
+              </View>
+            </TouchableOpacity>
           ))}
         </View>
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            For the latest news and updates, visit our website at finestknown.com
-          </Text>
-        </View>
+        {articles.length === 0 && (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="newspaper-outline" size={64} color={colors.textSecondary} />
+            <Text style={styles.emptyText}>No articles available yet</Text>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -110,38 +109,48 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: spacing.lg,
   },
-  header: {
-    paddingVertical: spacing.xl,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
   },
+  header: {
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.ivory,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.platinum,
+  },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '700',
     color: colors.navy,
-    textAlign: 'center',
-    marginBottom: spacing.md,
+    marginBottom: spacing.xs,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: 20,
   },
   newsList: {
-    marginBottom: spacing.xl,
+    padding: spacing.lg,
   },
   newsItem: {
     backgroundColor: colors.ivory,
     borderRadius: 12,
-    padding: spacing.lg,
     marginBottom: spacing.md,
     borderWidth: 1,
     borderColor: colors.platinum,
+    overflow: 'hidden',
+  },
+  newsImage: {
+    width: '100%',
+    height: 180,
+    backgroundColor: colors.platinum,
   },
   newsContent: {
-    flex: 1,
+    padding: spacing.md,
   },
   newsHeader: {
     flexDirection: 'row',
@@ -150,30 +159,30 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   newsCategory: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
     color: colors.gold,
     backgroundColor: colors.gold + '15',
     paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingVertical: 3,
+    borderRadius: 10,
   },
   newsDate: {
-    fontSize: 12,
+    fontSize: 11,
     color: colors.textSecondary,
   },
   newsTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
-    color: colors.text,
+    color: colors.textPrimary,
     marginBottom: spacing.sm,
-    lineHeight: 24,
+    lineHeight: 22,
   },
   newsExcerpt: {
-    fontSize: 14,
+    fontSize: 13,
     color: colors.textSecondary,
-    lineHeight: 20,
-    marginBottom: spacing.md,
+    lineHeight: 18,
+    marginBottom: spacing.sm,
   },
   newsFooter: {
     flexDirection: 'row',
@@ -181,18 +190,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   readMore: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
     color: colors.gold,
   },
-  footer: {
-    paddingVertical: spacing.xl,
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
+    paddingVertical: spacing.xxl,
   },
-  footerText: {
-    fontSize: 14,
+  emptyText: {
+    fontSize: 16,
     color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 20,
+    marginTop: spacing.md,
   },
 });
