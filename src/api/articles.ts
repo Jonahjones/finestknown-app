@@ -63,18 +63,45 @@ export async function listArticles(params: ListArticlesParams = {}) {
 }
 
 /**
- * Get a single article by slug (supports both database slug and title-based slug)
+ * Get a single article by ID or slug (supports UUID, database slug, and title-based slug)
  */
-export async function getArticle(slug: string) {
-  console.log('📖 getArticle: Fetching article with slug:', slug);
+export async function getArticle(idOrSlug: string) {
+  console.log('📖 getArticle: Fetching article with:', idOrSlug);
 
   try {
-    // First try to find by database slug
-    let { data, error } = await supabase
+    // Check if input looks like a UUID (contains dashes in UUID pattern)
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
+    
+    let data, error;
+
+    if (isUUID) {
+      // Try to find by ID first
+      console.log('📖 getArticle: Looks like UUID, trying ID lookup...');
+      const result = await supabase
+        .from('articles')
+        .select('*')
+        .eq('id', idOrSlug)
+        .single();
+      
+      data = result.data;
+      error = result.error;
+      
+      if (data) {
+        console.log('✅ getArticle: Found article by ID:', data.title);
+        return data;
+      }
+    }
+
+    // If not found by ID or not a UUID, try to find by database slug
+    console.log('📖 getArticle: Trying slug lookup...');
+    const slugResult = await supabase
       .from('articles')
       .select('*')
-      .eq('slug', slug)
+      .eq('slug', idOrSlug)
       .single();
+    
+    data = slugResult.data;
+    error = slugResult.error;
 
     // If not found by slug, try to find by title pattern
     if (error && error.code === 'PGRST116') {
@@ -92,7 +119,7 @@ export async function getArticle(slug: string) {
 
       // Find article where title matches the slug
       const matchingArticle = allArticles?.find(article => 
-        titleMatchesSlug(article.title, slug)
+        titleMatchesSlug(article.title, idOrSlug)
       );
 
       if (matchingArticle) {
@@ -100,7 +127,7 @@ export async function getArticle(slug: string) {
         error = null;
         console.log('✅ getArticle: Found article by title match:', matchingArticle.title);
       } else {
-        console.warn('⚠️ getArticle: Article not found for slug:', slug);
+        console.warn('⚠️ getArticle: Article not found for:', idOrSlug);
         throw new Error('Article not found');
       }
     } else if (error) {
@@ -109,7 +136,7 @@ export async function getArticle(slug: string) {
     }
 
     if (!data) {
-      console.warn('⚠️ getArticle: Article not found for slug:', slug);
+      console.warn('⚠️ getArticle: Article not found for:', idOrSlug);
       throw new Error('Article not found');
     }
 
