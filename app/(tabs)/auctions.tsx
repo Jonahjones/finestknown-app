@@ -6,8 +6,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuctionBadge } from '../../src/components/auction/AuctionBadge';
 import { CountdownTimer } from '../../src/components/auction/CountdownTimer';
 import { radius, spacing, typography } from '../../src/design/tokens';
+import { supabase } from '../../src/lib/supabase';
 import { useRealtime } from '../../src/providers/RealtimeProvider';
-import { Auction, listAuctions } from '../../src/services/auction';
+import { Auction, listAuctions, listBids } from '../../src/services/auction';
 import { colors, shadow } from '../../src/theme';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -18,7 +19,7 @@ const Haptics = {
   ImpactFeedbackStyle: { Light: 'light', Medium: 'medium' },
 };
 
-type TabType = 'live' | 'upcoming' | 'closed';
+type TabType = 'live' | 'upcoming' | 'mywins';
 type SortType = 'ending' | 'highest' | 'newest';
 
 // Skeleton Loader Component
@@ -109,7 +110,7 @@ function PulsingBadge({ count, active }: { count: number; active: boolean }) {
   return (
     <Animated.View style={[
       styles.badge,
-      active && styles.badgeActive,
+      active && styles.badgeActiveLive,
       { transform: [{ scale: pulseAnim }] }
     ]}>
       <Text style={[styles.badgeText, active && styles.badgeTextActive]}>
@@ -126,23 +127,52 @@ export default function AuctionsScreen() {
   const [activeTab, setActiveTab] = useState<TabType>('live');
   const [sortBy, setSortBy] = useState<SortType>('ending');
   const [showSortMenu, setShowSortMenu] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [userWins, setUserWins] = useState<Set<string>>(new Set());
   const { subscribe, unsubscribe } = useRealtime();
   
   // Animations
   const tabIndicatorAnim = useRef(new Animated.Value(0)).current;
   const contentFadeAnim = useRef(new Animated.Value(1)).current;
 
+  useEffect(() => {
+    // Get current user
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user) {
+        setCurrentUserId(data.user.id);
+      }
+    });
+  }, []);
+
   const fetchAuctions = useCallback(async () => {
     try {
       setLoading(true);
       const data = await listAuctions();
       setAuctions(data);
+      
+      // Fetch user wins if logged in
+      if (currentUserId) {
+        const wins = new Set<string>();
+        await Promise.all(
+          data.map(async (auction) => {
+            try {
+              const bidsData = await listBids(auction.id);
+              if (bidsData.length > 0 && bidsData[0].userId === currentUserId && auction.status === 'ended') {
+                wins.add(auction.id);
+              }
+            } catch (err) {
+              console.error('Error fetching bids for auction:', auction.id, err);
+            }
+          })
+        );
+        setUserWins(wins);
+      }
     } catch (error) {
       console.error('Failed to fetch auctions:', error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentUserId]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -189,14 +219,14 @@ export default function AuctionsScreen() {
     let filtered = auctions.filter((a) => {
       if (activeTab === 'live') return a.status === 'live';
       if (activeTab === 'upcoming') return a.status === 'scheduled';
-      if (activeTab === 'closed') return a.status === 'ended';
+      if (activeTab === 'mywins') return userWins.has(a.id);
       return false;
     });
 
     // Apply sorting
     if (sortBy === 'ending') {
       filtered = filtered.sort((a, b) => 
-        activeTab === 'closed' 
+        activeTab === 'mywins' 
           ? new Date(b.endAt).getTime() - new Date(a.endAt).getTime()
           : new Date(a.endAt).getTime() - new Date(b.endAt).getTime()
       );
@@ -207,15 +237,15 @@ export default function AuctionsScreen() {
     }
 
     return filtered;
-  }, [auctions, activeTab, sortBy]);
+  }, [auctions, activeTab, sortBy, userWins]);
 
   const tabCounts = React.useMemo(() => {
     return {
       live: auctions.filter((a) => a.status === 'live').length,
       upcoming: auctions.filter((a) => a.status === 'scheduled').length,
-      closed: auctions.filter((a) => a.status === 'ended').length,
+      mywins: userWins.size,
     };
-  }, [auctions]);
+  }, [auctions, userWins]);
 
   // Calculate stats
   const stats = React.useMemo(() => {
@@ -225,14 +255,22 @@ export default function AuctionsScreen() {
       return timeLeft < 3600000; // Less than 1 hour
     });
     
+    // Calculate wins total
+    const winsTotal = Array.from(userWins).reduce((sum, auctionId) => {
+      const auction = auctions.find(a => a.id === auctionId);
+      return sum + (auction?.currentCents || 0);
+    }, 0);
+    
     return {
       liveCount: liveAuctions.length,
       endingSoonCount: endingSoon.length,
+      winsTotal,
+      winsCount: userWins.size,
       nextAuction: auctions
         .filter(a => a.status === 'scheduled')
         .sort((a, b) => new Date(a.endAt).getTime() - new Date(b.endAt).getTime())[0],
     };
-  }, [auctions]);
+  }, [auctions, userWins]);
 
   const handleAuctionPress = (id: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -277,10 +315,17 @@ export default function AuctionsScreen() {
     // Check if ending soon
     const timeLeft = new Date(item.endAt).getTime() - Date.now();
     const isEndingSoon = item.status === 'live' && timeLeft < 3600000;
+    
+    // Check if this is a win
+    const isWin = userWins.has(item.id);
 
     return (
       <TouchableOpacity
-        style={[styles.card, isEndingSoon && styles.cardEndingSoon]}
+        style={[
+          styles.card,
+          isEndingSoon && styles.cardEndingSoon,
+          isWin && styles.cardWin,
+        ]}
         onPress={() => handleAuctionPress(item.id)}
         activeOpacity={0.8}
       >
@@ -288,6 +333,13 @@ export default function AuctionsScreen() {
           <View style={styles.endingSoonBanner}>
             <Ionicons name="flash" size={16} color="#D32F2F" />
             <Text style={styles.endingSoonText}>ENDING SOON</Text>
+          </View>
+        )}
+        
+        {isWin && (
+          <View style={styles.winBanner}>
+            <Ionicons name="trophy" size={16} color="#F5A524" />
+            <Text style={styles.winText}>YOU WON!</Text>
           </View>
         )}
         
@@ -314,17 +366,17 @@ export default function AuctionsScreen() {
             {item.title}
           </Text>
 
-          <View style={styles.bidContainer}>
+          <View style={[styles.bidContainer, isWin && styles.bidContainerWin]}>
             <Text style={styles.bidLabel}>
-              {item.status === 'ended' ? 'Final Price' : 'Current Bid'}
+              {isWin ? 'Winning Bid' : item.status === 'ended' ? 'Final Price' : 'Current Bid'}
             </Text>
-            <Text style={styles.currentBid}>
+            <Text style={[styles.currentBid, isWin && styles.currentBidWin]}>
               ${(item.currentCents / 100).toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
             </Text>
-            {item.status !== 'ended' && (
+            {item.status !== 'ended' && !isWin && (
               <Text style={styles.bidCountBadge}>{bidCount} bids</Text>
             )}
           </View>
@@ -343,9 +395,18 @@ export default function AuctionsScreen() {
             </View>
           )}
 
-          {item.status === 'ended' && (
+          {item.status === 'ended' && !isWin && (
             <View style={styles.footer}>
               <Text style={styles.endedText}>Auction Ended</Text>
+            </View>
+          )}
+          
+          {isWin && (
+            <View style={styles.footer}>
+              <TouchableOpacity style={styles.viewReceiptButton}>
+                <Ionicons name="receipt-outline" size={16} color="#F5A524" />
+                <Text style={styles.viewReceiptText}>View Details</Text>
+              </TouchableOpacity>
             </View>
           )}
         </View>
@@ -358,7 +419,7 @@ export default function AuctionsScreen() {
       return (
         <View style={styles.emptyContainer}>
           <View style={styles.emptyIconContainer}>
-            <Ionicons name="time-outline" size={64} color={colors.text.secondary} />
+            <Ionicons name="time-outline" size={64} color="#2E7D32" />
           </View>
           <Text style={styles.emptyText}>No live auctions right now</Text>
           <Text style={styles.emptySubtext}>
@@ -380,7 +441,7 @@ export default function AuctionsScreen() {
       return (
         <View style={styles.emptyContainer}>
           <View style={styles.emptyIconContainer}>
-            <Ionicons name="calendar-outline" size={64} color={colors.text.secondary} />
+            <Ionicons name="calendar-outline" size={64} color="#F5A524" />
           </View>
           <Text style={styles.emptyText}>No upcoming auctions</Text>
           {stats.nextAuction ? (
@@ -396,16 +457,24 @@ export default function AuctionsScreen() {
       );
     }
     
-    // Closed
+    // My Wins
     return (
       <View style={styles.emptyContainer}>
         <View style={styles.emptyIconContainer}>
-          <Ionicons name="checkmark-circle-outline" size={64} color={colors.text.secondary} />
+          <Ionicons name="trophy-outline" size={64} color="#F5A524" />
         </View>
-        <Text style={styles.emptyText}>No closed auctions</Text>
+        <Text style={styles.emptyText}>No wins yet</Text>
         <Text style={styles.emptySubtext}>
-          Completed auctions will appear here
+          Win your first auction to see it here! 🏆
         </Text>
+        {tabCounts.live > 0 && (
+          <TouchableOpacity
+            style={[styles.emptyButton, styles.emptyButtonGold]}
+            onPress={() => handleTabPress('live')}
+          >
+            <Text style={styles.emptyButtonText}>Start Bidding</Text>
+          </TouchableOpacity>
+        )}
       </View>
     );
   };
@@ -423,13 +492,13 @@ export default function AuctionsScreen() {
         </View>
         <View style={styles.tabBar}>
           <View style={styles.tab}>
-            <Text style={styles.tabTextActive}>🔴 Live</Text>
+            <Text style={styles.tabTextActiveLive}>🟢 Live</Text>
           </View>
           <View style={styles.tab}>
-            <Text style={styles.tabText}>📅 Upcoming</Text>
+            <Text style={styles.tabText}>🟡 Upcoming</Text>
           </View>
           <View style={styles.tab}>
-            <Text style={styles.tabText}>🏁 Closed</Text>
+            <Text style={styles.tabText}>🏆 My Wins</Text>
           </View>
         </View>
         <View style={styles.skeletonContainer}>
@@ -457,8 +526,8 @@ export default function AuctionsScreen() {
             style={styles.tab}
             onPress={() => handleTabPress('live')}
           >
-            <Text style={[styles.tabText, activeTab === 'live' && styles.tabTextActive]}>
-              🔴 Live
+            <Text style={[styles.tabText, activeTab === 'live' && styles.tabTextActiveLive]}>
+              🟢 Live
             </Text>
             {tabCounts.live > 0 && (
               <PulsingBadge count={tabCounts.live} active={activeTab === 'live'} />
@@ -469,11 +538,11 @@ export default function AuctionsScreen() {
             style={styles.tab}
             onPress={() => handleTabPress('upcoming')}
           >
-            <Text style={[styles.tabText, activeTab === 'upcoming' && styles.tabTextActive]}>
-              📅 Upcoming
+            <Text style={[styles.tabText, activeTab === 'upcoming' && styles.tabTextActiveUpcoming]}>
+              🟡 Upcoming
             </Text>
             {tabCounts.upcoming > 0 && (
-              <View style={[styles.badge, activeTab === 'upcoming' && styles.badgeActive]}>
+              <View style={[styles.badge, activeTab === 'upcoming' && styles.badgeActiveUpcoming]}>
                 <Text style={[styles.badgeText, activeTab === 'upcoming' && styles.badgeTextActive]}>
                   {tabCounts.upcoming}
                 </Text>
@@ -483,15 +552,15 @@ export default function AuctionsScreen() {
 
           <TouchableOpacity
             style={styles.tab}
-            onPress={() => handleTabPress('closed')}
+            onPress={() => handleTabPress('mywins')}
           >
-            <Text style={[styles.tabText, activeTab === 'closed' && styles.tabTextActive]}>
-              🏁 Closed
+            <Text style={[styles.tabText, activeTab === 'mywins' && styles.tabTextActiveWins]}>
+              🏆 My Wins
             </Text>
-            {tabCounts.closed > 0 && (
-              <View style={[styles.badge, activeTab === 'closed' && styles.badgeActive]}>
-                <Text style={[styles.badgeText, activeTab === 'closed' && styles.badgeTextActive]}>
-                  {tabCounts.closed}
+            {tabCounts.mywins > 0 && (
+              <View style={[styles.badge, activeTab === 'mywins' && styles.badgeActiveWins]}>
+                <Text style={[styles.badgeText, activeTab === 'mywins' && styles.badgeTextActive]}>
+                  {tabCounts.mywins}
                 </Text>
               </View>
             )}
@@ -502,6 +571,9 @@ export default function AuctionsScreen() {
         <Animated.View 
           style={[
             styles.tabIndicator,
+            activeTab === 'live' && styles.tabIndicatorLive,
+            activeTab === 'upcoming' && styles.tabIndicatorUpcoming,
+            activeTab === 'mywins' && styles.tabIndicatorWins,
             {
               transform: [{ translateX: indicatorTranslateX }],
             },
@@ -525,66 +597,86 @@ export default function AuctionsScreen() {
           )}
         </View>
       )}
+      
+      {/* My Wins Stats */}
+      {activeTab === 'mywins' && tabCounts.mywins > 0 && (
+        <View style={styles.winsStatsBar}>
+          <View style={styles.statItem}>
+            <Ionicons name="trophy" size={20} color="#F5A524" />
+            <Text style={styles.winsStatText}>
+              {stats.winsCount} {stats.winsCount === 1 ? 'Win' : 'Wins'}
+            </Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.winsStatLabel}>Total Value:</Text>
+            <Text style={styles.winsStatValue}>
+              ${(stats.winsTotal / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            </Text>
+          </View>
+        </View>
+      )}
 
       {/* Sort Menu */}
-      <View style={styles.sortContainer}>
-        <TouchableOpacity
-          style={styles.sortButton}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setShowSortMenu(!showSortMenu);
-          }}
-        >
-          <Text style={styles.sortButtonText}>
-            Sort: {sortBy === 'ending' ? 'Ending Soon' : sortBy === 'highest' ? 'Highest Bid' : 'Newest'}
-          </Text>
-          <Ionicons name="chevron-down" size={16} color={colors.text.primary} />
-        </TouchableOpacity>
-        
-        {showSortMenu && (
-          <View style={styles.sortMenu}>
-            <TouchableOpacity
-              style={[styles.sortOption, sortBy === 'ending' && styles.sortOptionActive]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setSortBy('ending');
-                setShowSortMenu(false);
-              }}
-            >
-              <Text style={[styles.sortOptionText, sortBy === 'ending' && styles.sortOptionTextActive]}>
-                Ending Soon
-              </Text>
-              {sortBy === 'ending' && <Ionicons name="checkmark" size={20} color="#0654BA" />}
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.sortOption, sortBy === 'highest' && styles.sortOptionActive]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setSortBy('highest');
-                setShowSortMenu(false);
-              }}
-            >
-              <Text style={[styles.sortOptionText, sortBy === 'highest' && styles.sortOptionTextActive]}>
-                Highest Bid
-              </Text>
-              {sortBy === 'highest' && <Ionicons name="checkmark" size={20} color="#0654BA" />}
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.sortOption, sortBy === 'newest' && styles.sortOptionActive]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setSortBy('newest');
-                setShowSortMenu(false);
-              }}
-            >
-              <Text style={[styles.sortOptionText, sortBy === 'newest' && styles.sortOptionTextActive]}>
-                Newest
-              </Text>
-              {sortBy === 'newest' && <Ionicons name="checkmark" size={20} color="#0654BA" />}
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
+      {activeTab !== 'mywins' && (
+        <View style={styles.sortContainer}>
+          <TouchableOpacity
+            style={styles.sortButton}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setShowSortMenu(!showSortMenu);
+            }}
+          >
+            <Text style={styles.sortButtonText}>
+              Sort: {sortBy === 'ending' ? 'Ending Soon' : sortBy === 'highest' ? 'Highest Bid' : 'Newest'}
+            </Text>
+            <Ionicons name="chevron-down" size={16} color={colors.text.primary} />
+          </TouchableOpacity>
+          
+          {showSortMenu && (
+            <View style={styles.sortMenu}>
+              <TouchableOpacity
+                style={[styles.sortOption, sortBy === 'ending' && styles.sortOptionActive]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setSortBy('ending');
+                  setShowSortMenu(false);
+                }}
+              >
+                <Text style={[styles.sortOptionText, sortBy === 'ending' && styles.sortOptionTextActive]}>
+                  Ending Soon
+                </Text>
+                {sortBy === 'ending' && <Ionicons name="checkmark" size={20} color="#2E7D32" />}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.sortOption, sortBy === 'highest' && styles.sortOptionActive]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setSortBy('highest');
+                  setShowSortMenu(false);
+                }}
+              >
+                <Text style={[styles.sortOptionText, sortBy === 'highest' && styles.sortOptionTextActive]}>
+                  Highest Bid
+                </Text>
+                {sortBy === 'highest' && <Ionicons name="checkmark" size={20} color="#2E7D32" />}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.sortOption, sortBy === 'newest' && styles.sortOptionActive]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setSortBy('newest');
+                  setShowSortMenu(false);
+                }}
+              >
+                <Text style={[styles.sortOptionText, sortBy === 'newest' && styles.sortOptionTextActive]}>
+                  Newest
+                </Text>
+                {sortBy === 'newest' && <Ionicons name="checkmark" size={20} color="#2E7D32" />}
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      )}
 
       {/* Content with Fade Animation */}
       <Animated.View style={[styles.contentContainer, { opacity: contentFadeAnim }]}>
@@ -659,9 +751,17 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.medium,
     color: colors.text.secondary,
   },
-  tabTextActive: {
+  tabTextActiveLive: {
     fontWeight: typography.weights.bold,
-    color: '#0654BA',
+    color: '#2E7D32',
+  },
+  tabTextActiveUpcoming: {
+    fontWeight: typography.weights.bold,
+    color: '#F5A524',
+  },
+  tabTextActiveWins: {
+    fontWeight: typography.weights.bold,
+    color: '#F5A524',
   },
   tabIndicator: {
     position: 'absolute',
@@ -669,7 +769,15 @@ const styles = StyleSheet.create({
     left: 0,
     width: SCREEN_WIDTH / 3,
     height: 3,
-    backgroundColor: '#0654BA',
+  },
+  tabIndicatorLive: {
+    backgroundColor: '#2E7D32',
+  },
+  tabIndicatorUpcoming: {
+    backgroundColor: '#F5A524',
+  },
+  tabIndicatorWins: {
+    backgroundColor: '#F5A524',
   },
   badge: {
     backgroundColor: colors.border,
@@ -680,8 +788,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badgeActive: {
-    backgroundColor: '#0654BA',
+  badgeActiveLive: {
+    backgroundColor: '#2E7D32',
+  },
+  badgeActiveUpcoming: {
+    backgroundColor: '#F5A524',
+  },
+  badgeActiveWins: {
+    backgroundColor: '#F5A524',
   },
   badgeText: {
     fontSize: 12,
@@ -692,6 +806,15 @@ const styles = StyleSheet.create({
     color: colors.surface,
   },
   statsBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    backgroundColor: '#E8F5E9',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: '#C8E6C9',
+  },
+  winsStatsBar: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     backgroundColor: '#FFF9E6',
@@ -706,19 +829,29 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   statLabel: {
-    fontSize: typography.caption.size,
-    color: colors.text.secondary,
-    fontWeight: typography.weights.medium,
-  },
-  statValue: {
     fontSize: typography.body.size,
-    fontWeight: typography.weights.bold,
     color: colors.text.primary,
+    fontWeight: typography.weights.semibold,
   },
   statHighlight: {
     fontSize: typography.caption.size,
     fontWeight: typography.weights.semibold,
     color: '#D32F2F',
+  },
+  winsStatText: {
+    fontSize: typography.body.size,
+    fontWeight: typography.weights.bold,
+    color: '#F5A524',
+  },
+  winsStatLabel: {
+    fontSize: typography.caption.size,
+    color: colors.text.secondary,
+    fontWeight: typography.weights.medium,
+  },
+  winsStatValue: {
+    fontSize: typography.body.size,
+    fontWeight: typography.weights.bold,
+    color: colors.text.primary,
   },
   sortContainer: {
     position: 'relative',
@@ -772,7 +905,7 @@ const styles = StyleSheet.create({
   },
   sortOptionTextActive: {
     fontWeight: typography.weights.semibold,
-    color: '#0654BA',
+    color: '#2E7D32',
   },
   contentContainer: {
     flex: 1,
@@ -796,6 +929,10 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#D32F2F',
   },
+  cardWin: {
+    borderWidth: 2,
+    borderColor: '#F5A524',
+  },
   endingSoonBanner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -806,6 +943,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   endingSoonText: {
+    fontSize: typography.caption.size,
+    fontWeight: typography.weights.bold,
+    color: colors.surface,
+    letterSpacing: 0.5,
+  },
+  winBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5A524',
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    gap: spacing.xs,
+    justifyContent: 'center',
+  },
+  winText: {
     fontSize: typography.caption.size,
     fontWeight: typography.weights.bold,
     color: colors.surface,
@@ -839,7 +991,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#D32F2F',
+    backgroundColor: '#2E7D32',
   },
   cardContent: {
     padding: spacing.lg,
@@ -860,6 +1012,10 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
     borderLeftColor: '#F5A524',
   },
+  bidContainerWin: {
+    backgroundColor: '#FFF9E6',
+    borderLeftColor: '#F5A524',
+  },
   bidLabel: {
     fontSize: typography.caption.size,
     color: colors.text.secondary,
@@ -872,6 +1028,9 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: typography.weights.bold,
     color: '#D32F2F',
+  },
+  currentBidWin: {
+    color: '#F5A524',
   },
   bidCountBadge: {
     fontSize: typography.caption.size,
@@ -897,7 +1056,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   bidButtonSmall: {
-    backgroundColor: '#0654BA',
+    backgroundColor: '#2E7D32',
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.xl,
     borderRadius: radius.md,
@@ -913,6 +1072,22 @@ const styles = StyleSheet.create({
     fontSize: typography.body.size,
     color: colors.text.secondary,
     fontStyle: 'italic',
+  },
+  viewReceiptButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: '#FFF9E6',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: '#F5A524',
+  },
+  viewReceiptText: {
+    fontSize: typography.body.size,
+    fontWeight: typography.weights.semibold,
+    color: '#F5A524',
   },
   emptyContainer: {
     paddingVertical: spacing.xxl * 2,
@@ -938,10 +1113,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   emptyButton: {
-    backgroundColor: '#0654BA',
+    backgroundColor: '#2E7D32',
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
     borderRadius: radius.pill,
+  },
+  emptyButtonGold: {
+    backgroundColor: '#F5A524',
   },
   emptyButtonText: {
     fontSize: typography.body.size,
