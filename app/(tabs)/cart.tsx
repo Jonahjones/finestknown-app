@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
   cartList: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
-    paddingBottom: 400, // Increased to accommodate sticky checkout container
+    paddingBottom: 220, // Space for sticky checkout container
   },
   cartItem: {
     flexDirection: 'row',
