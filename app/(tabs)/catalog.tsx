@@ -12,8 +12,6 @@ import * as Haptics from 'expo-haptics';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
-  Animated,
   Dimensions,
   FlatList,
   Modal,
@@ -362,50 +360,41 @@ export default function CatalogScreen() {
 
   const renderHeader = () => (
     <>
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color={colors.text.secondary} />
-        <TextInput
-          ref={searchInputRef}
-          style={styles.searchInput}
-          placeholder="Search products..."
-          placeholderTextColor={colors.text.secondary}
-          value={searchQuery}
-          onChangeText={handleSearch}
-        />
-        {searchQuery.length > 0 && (
-          <TouchableOpacity onPress={clearSearch}>
-            <Ionicons name="close-circle" size={20} color={colors.text.secondary} />
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Category Dropdown Button */}
-      <View style={styles.categoryDropdownContainer}>
+      {/* Search Bar with Category Dropdown */}
+      <View style={styles.searchRow}>
+        {/* Category Dropdown Button - Compact */}
         <TouchableOpacity
-          style={styles.categoryDropdownButton}
+          style={styles.categoryButton}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             setShowCategoryDropdown(!showCategoryDropdown);
           }}
         >
-          <View style={styles.categoryDropdownContent}>
-            <Ionicons name="grid-outline" size={20} color={colors.brand} />
-            <Text style={styles.categoryDropdownText}>
-              {categories.find(cat => cat.slug === selectedCategory)?.name || 'All Categories'}
-            </Text>
-            {data && (
-              <View style={styles.categoryCountBadge}>
-                <Text style={styles.categoryCountText}>{processedProducts.length}</Text>
-              </View>
-            )}
-          </View>
-          <Ionicons 
-            name={showCategoryDropdown ? "chevron-up" : "chevron-down"} 
-            size={20} 
-            color={colors.text.primary} 
-          />
+          <Ionicons name="grid-outline" size={22} color={colors.brand} />
+          {data && (
+            <View style={styles.categoryButtonBadge}>
+              <Text style={styles.categoryButtonBadgeText}>{processedProducts.length}</Text>
+            </View>
+          )}
         </TouchableOpacity>
+
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={20} color={colors.text.secondary} />
+          <TextInput
+            ref={searchInputRef}
+            style={styles.searchInput}
+            placeholder="Search products..."
+            placeholderTextColor={colors.text.secondary}
+            value={searchQuery}
+            onChangeText={handleSearch}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={clearSearch}>
+              <Ionicons name="close-circle" size={20} color={colors.text.secondary} />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* Quick Filters Bar */}
@@ -573,7 +562,12 @@ export default function CatalogScreen() {
           onPress={() => setShowCategoryDropdown(false)}
         >
           <View style={styles.dropdownMenu}>
-            <Text style={styles.dropdownMenuTitle}>Browse Categories</Text>
+            <View style={styles.dropdownMenuHeader}>
+              <Text style={styles.dropdownMenuTitle}>Browse Categories</Text>
+              <Text style={styles.dropdownMenuSubtitle}>
+                Current: {categories.find(cat => cat.slug === selectedCategory)?.name || 'All'}
+              </Text>
+            </View>
             
             <FlatList
               data={categories}
@@ -672,14 +666,55 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg,
   },
   
-  // Search
+  // Search Row (Category + Search)
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
+  },
+  
+  // Category Button (Compact Icon)
+  categoryButton: {
+    width: 48,
+    height: 48,
+    borderRadius: radii.md,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    position: 'relative',
+    ...shadow.card,
+  },
+  categoryButtonBadge: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    backgroundColor: colors.brand,
+    borderRadius: radii.pill,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    minWidth: 20,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: colors.bg,
+  },
+  categoryButtonBadgeText: {
+    ...type.meta,
+    color: colors.surface,
+    fontWeight: '700',
+    fontSize: 10,
+  },
+
+  // Search Bar
   searchContainer: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surface,
-    marginHorizontal: spacing.lg,
-    marginTop: spacing.md,
-    marginBottom: spacing.sm,
     paddingHorizontal: spacing.md,
     borderRadius: radii.md,
     ...shadow.card,
@@ -690,51 +725,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     ...type.body,
     color: colors.text.primary,
-  },
-
-  // Category Dropdown Button
-  categoryDropdownContainer: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  categoryDropdownButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.md,
-    backgroundColor: colors.bg,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  categoryDropdownContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    flex: 1,
-  },
-  categoryDropdownText: {
-    ...type.title,
-    color: colors.text.primary,
-    flex: 1,
-  },
-  categoryCountBadge: {
-    backgroundColor: colors.brand,
-    borderRadius: radii.pill,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    minWidth: 24,
-    alignItems: 'center',
-  },
-  categoryCountText: {
-    ...type.meta,
-    color: colors.surface,
-    fontWeight: '700',
-    fontSize: 11,
   },
 
   // Quick Filters
@@ -930,11 +920,18 @@ const styles = StyleSheet.create({
     maxHeight: '70%',
     ...shadow.sticky,
   },
+  dropdownMenuHeader: {
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+  },
   dropdownMenuTitle: {
     ...type.h2,
     color: colors.text.primary,
-    paddingHorizontal: spacing.lg,
-    marginBottom: spacing.md,
+    marginBottom: spacing.xs,
+  },
+  dropdownMenuSubtitle: {
+    ...type.body,
+    color: colors.text.secondary,
   },
   dropdownMenuItem: {
     flexDirection: 'row',
