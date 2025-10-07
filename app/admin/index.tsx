@@ -10,16 +10,16 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Dimensions,
-    FlatList,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+  FlatList,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -259,14 +259,25 @@ export default function AdminIndexScreen() {
               </TouchableOpacity>
             </View>
             
-            <TouchableOpacity 
-              style={styles.newProductButton}
-              onPress={() => router.push('/admin/new')}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="add" size={20} color={colors.ivory} />
-              <Text style={styles.newProductButtonText}>New Product</Text>
-            </TouchableOpacity>
+            <View style={styles.actionButtonsRow}>
+              <TouchableOpacity 
+                style={styles.auctionsButton}
+                onPress={() => router.push('/admin/auctions')}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="flash" size={20} color={colors.gold} />
+                <Text style={styles.auctionsButtonText}>Auctions</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.newProductButton}
+                onPress={() => router.push('/admin/new')}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="add" size={20} color={colors.ivory} />
+                <Text style={styles.newProductButtonText}>New Product</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Products List */}
@@ -430,7 +441,33 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  actionButtonsRow: {
+    flexDirection: 'row',
+    gap: spacing.m,
+  },
+  auctionsButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.ivory,
+    paddingHorizontal: spacing.l,
+    paddingVertical: spacing.m,
+    borderRadius: radius.lg,
+    borderWidth: 2,
+    borderColor: colors.gold,
+    minHeight: 48,
+    ...shadows.e1,
+  },
+  auctionsButtonText: {
+    fontSize: typography.body.size,
+    lineHeight: typography.body.lineHeight,
+    fontWeight: typography.weights.semibold,
+    color: colors.navy,
+    marginLeft: spacing.s,
+  },
   newProductButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -488,7 +525,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.gold,
     paddingHorizontal: spacing.xs,
     paddingVertical: 2,
-    borderRadius: radius.xs,
+    borderRadius: radius.sm,
     borderWidth: 2,
     borderColor: colors.ivory,
   },

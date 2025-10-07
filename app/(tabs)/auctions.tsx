@@ -1,0 +1,432 @@
+import { router, useFocusEffect } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { AuctionBadge } from '../../src/components/auction/AuctionBadge';
+import { CountdownTimer } from '../../src/components/auction/CountdownTimer';
+import { radius, spacing, typography } from '../../src/design/tokens';
+import { useRealtime } from '../../src/providers/RealtimeProvider';
+import { Auction, listAuctions } from '../../src/services/auction';
+import { colors, shadow } from '../../src/theme';
+
+type TabType = 'live' | 'upcoming' | 'closed';
+
+export default function AuctionsScreen() {
+  const [auctions, setAuctions] = useState<Auction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<TabType>('live');
+  const { subscribe, unsubscribe } = useRealtime();
+
+  const fetchAuctions = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await listAuctions();
+      setAuctions(data);
+    } catch (error) {
+      console.error('Failed to fetch auctions:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchAuctions();
+    }, [fetchAuctions])
+  );
+
+  // Subscribe to realtime updates for all auctions
+  useEffect(() => {
+    if (auctions.length === 0) return;
+
+    const handlers: Array<{ channel: string; handler: (payload: any) => void }> = [];
+
+    auctions.forEach((auction) => {
+      const channelName = `auctions:${auction.id}`;
+      const handler = (payload: { currentCents: number }) => {
+        console.log(`[Auction List] Update for ${auction.id}:`, payload.currentCents);
+        setAuctions((prev) =>
+          prev.map((a) =>
+            a.id === auction.id ? { ...a, currentCents: payload.currentCents } : a
+          )
+        );
+      };
+
+      subscribe(channelName, handler);
+      handlers.push({ channel: channelName, handler });
+    });
+
+    return () => {
+      handlers.forEach(({ channel, handler }) => {
+        unsubscribe(channel, handler);
+      });
+    };
+  }, [auctions.length, subscribe, unsubscribe]);
+
+  const filteredAuctions = React.useMemo(() => {
+    const filtered = auctions.filter((a) => {
+      if (activeTab === 'live') return a.status === 'live';
+      if (activeTab === 'upcoming') return a.status === 'scheduled';
+      if (activeTab === 'closed') return a.status === 'ended';
+      return false;
+    });
+
+    // Sort appropriately
+    if (activeTab === 'closed') {
+      return filtered.sort((a, b) => new Date(b.endAt).getTime() - new Date(a.endAt).getTime());
+    }
+    return filtered.sort((a, b) => new Date(a.endAt).getTime() - new Date(b.endAt).getTime());
+  }, [auctions, activeTab]);
+
+  const tabCounts = React.useMemo(() => {
+    return {
+      live: auctions.filter((a) => a.status === 'live').length,
+      upcoming: auctions.filter((a) => a.status === 'scheduled').length,
+      closed: auctions.filter((a) => a.status === 'ended').length,
+    };
+  }, [auctions]);
+
+  const handleAuctionPress = (id: string) => {
+    router.push(`/auction/${id}` as any);
+  };
+
+  const renderAuctionCard = ({ item }: { item: Auction }) => (
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => handleAuctionPress(item.id)}
+      activeOpacity={0.8}
+    >
+      <View style={styles.imageWrapper}>
+        <Image
+          source={{
+            uri: item.imageUrl || 'https://via.placeholder.com/300x300/F7F6F3/999?text=No+Image',
+          }}
+          style={styles.image}
+          resizeMode="cover"
+        />
+        <View style={styles.imageOverlay}>
+          <AuctionBadge status={item.status} compact />
+        </View>
+      </View>
+
+      <View style={styles.cardContent}>
+        <Text style={styles.title} numberOfLines={2}>
+          {item.title}
+        </Text>
+
+        <View style={styles.bidContainer}>
+          <Text style={styles.bidLabel}>
+            {item.status === 'ended' ? 'Final Price' : 'Current Bid'}
+          </Text>
+          <Text style={styles.currentBid}>
+            ${(item.currentCents / 100).toLocaleString('en-US', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </Text>
+        </View>
+
+        {item.status !== 'ended' && (
+          <View style={styles.footer}>
+            <View style={styles.timeContainer}>
+              <Text style={styles.timeIcon}>⏱</Text>
+              <CountdownTimer endAt={item.endAt} />
+            </View>
+            <View style={styles.bidButtonSmall}>
+              <Text style={styles.bidButtonText}>
+                {item.status === 'live' ? 'Bid' : 'View'}
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {item.status === 'ended' && (
+          <View style={styles.footer}>
+            <Text style={styles.endedText}>Auction Ended</Text>
+          </View>
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={colors.brand} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Auctions</Text>
+        <Text style={styles.headerSubtitle}>
+          {auctions.length} total {auctions.length === 1 ? 'auction' : 'auctions'}
+        </Text>
+      </View>
+
+      {/* Tab Bar */}
+      <View style={styles.tabBar}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'live' && styles.tabActive]}
+          onPress={() => setActiveTab('live')}
+        >
+          <Text style={[styles.tabText, activeTab === 'live' && styles.tabTextActive]}>
+            🔴 Live
+          </Text>
+          {tabCounts.live > 0 && (
+            <View style={[styles.badge, activeTab === 'live' && styles.badgeActive]}>
+              <Text style={[styles.badgeText, activeTab === 'live' && styles.badgeTextActive]}>
+                {tabCounts.live}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'upcoming' && styles.tabActive]}
+          onPress={() => setActiveTab('upcoming')}
+        >
+          <Text style={[styles.tabText, activeTab === 'upcoming' && styles.tabTextActive]}>
+            📅 Upcoming
+          </Text>
+          {tabCounts.upcoming > 0 && (
+            <View style={[styles.badge, activeTab === 'upcoming' && styles.badgeActive]}>
+              <Text style={[styles.badgeText, activeTab === 'upcoming' && styles.badgeTextActive]}>
+                {tabCounts.upcoming}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'closed' && styles.tabActive]}
+          onPress={() => setActiveTab('closed')}
+        >
+          <Text style={[styles.tabText, activeTab === 'closed' && styles.tabTextActive]}>
+            🏁 Closed
+          </Text>
+          {tabCounts.closed > 0 && (
+            <View style={[styles.badge, activeTab === 'closed' && styles.badgeActive]}>
+              <Text style={[styles.badgeText, activeTab === 'closed' && styles.badgeTextActive]}>
+                {tabCounts.closed}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      {/* Content */}
+      <FlatList
+        data={filteredAuctions}
+        renderItem={renderAuctionCard}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContent}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>
+              {activeTab === 'live' && 'No live auctions'}
+              {activeTab === 'upcoming' && 'No upcoming auctions'}
+              {activeTab === 'closed' && 'No closed auctions'}
+            </Text>
+            <Text style={styles.emptySubtext}>Check back soon for new items</Text>
+          </View>
+        }
+      />
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F5F5F5',
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  header: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.md,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: typography.weights.bold,
+    color: colors.text.primary,
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    fontSize: typography.body.size,
+    color: colors.text.secondary,
+    fontWeight: typography.weights.medium,
+  },
+  tabBar: {
+    flexDirection: 'row',
+    backgroundColor: colors.surface,
+    borderBottomWidth: 2,
+    borderBottomColor: colors.border,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.md,
+    gap: spacing.xs,
+    borderBottomWidth: 3,
+    borderBottomColor: 'transparent',
+  },
+  tabActive: {
+    borderBottomColor: '#0654BA',
+  },
+  tabText: {
+    fontSize: typography.body.size,
+    fontWeight: typography.weights.medium,
+    color: colors.text.secondary,
+  },
+  tabTextActive: {
+    fontWeight: typography.weights.bold,
+    color: '#0654BA',
+  },
+  badge: {
+    backgroundColor: colors.border,
+    borderRadius: 12,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 2,
+    minWidth: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeActive: {
+    backgroundColor: '#0654BA',
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: typography.weights.bold,
+    color: colors.text.secondary,
+  },
+  badgeTextActive: {
+    color: colors.surface,
+  },
+  listContent: {
+    padding: spacing.md,
+  },
+  card: {
+    marginBottom: spacing.lg,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+    ...shadow.card,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  imageWrapper: {
+    width: '100%',
+    height: 280,
+    backgroundColor: '#F7F6F3',
+    position: 'relative',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  imageOverlay: {
+    position: 'absolute',
+    top: spacing.md,
+    right: spacing.md,
+  },
+  cardContent: {
+    padding: spacing.lg,
+  },
+  title: {
+    fontSize: typography.heading.size,
+    lineHeight: typography.heading.lineHeight,
+    fontWeight: typography.weights.bold,
+    color: colors.text.primary,
+    marginBottom: spacing.md,
+    minHeight: 48,
+  },
+  bidContainer: {
+    backgroundColor: '#FFF9E6',
+    padding: spacing.md,
+    borderRadius: radius.md,
+    marginBottom: spacing.md,
+    borderLeftWidth: 4,
+    borderLeftColor: '#F5A524',
+  },
+  bidLabel: {
+    fontSize: typography.caption.size,
+    color: colors.text.secondary,
+    marginBottom: 4,
+    fontWeight: typography.weights.medium,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  currentBid: {
+    fontSize: 28,
+    fontWeight: typography.weights.bold,
+    color: '#D32F2F',
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  timeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: '#FFF3CD',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.sm,
+  },
+  timeIcon: {
+    fontSize: 16,
+  },
+  bidButtonSmall: {
+    backgroundColor: '#0654BA',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xl,
+    borderRadius: radius.md,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  bidButtonText: {
+    fontSize: typography.body.size,
+    fontWeight: typography.weights.bold,
+    color: colors.surface,
+  },
+  endedText: {
+    fontSize: typography.body.size,
+    color: colors.text.secondary,
+    fontStyle: 'italic',
+  },
+  emptyContainer: {
+    paddingVertical: spacing.xxl * 2,
+    alignItems: 'center',
+    width: '100%',
+  },
+  emptyText: {
+    fontSize: typography.title.size,
+    fontWeight: typography.title.weight,
+    color: colors.text.secondary,
+    marginBottom: spacing.xs,
+  },
+  emptySubtext: {
+    fontSize: typography.body.size,
+    color: colors.text.muted,
+  },
+});

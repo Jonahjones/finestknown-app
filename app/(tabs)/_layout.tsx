@@ -80,6 +80,22 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="auctions"
+        options={{
+          title: 'Auctions',
+          tabBarIcon: ({ color, focused, size }) => (
+            <View style={styles.tabIconContainer}>
+              <Ionicons 
+                name={focused ? 'flash' : 'flash-outline'} 
+                size={size || 24} 
+                color={color} 
+              />
+              {focused && <View style={styles.activeIndicator} />}
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="cart"
         options={{
           title: 'Cart',

@@ -8,6 +8,7 @@ import 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthWrapper } from '@/src/components/AuthWrapper';
 import { QueryProvider } from '@/src/providers/QueryProvider';
+import { RealtimeProvider } from '@/src/providers/RealtimeProvider';
 import { AuthProvider } from '@/src/store/AuthContext';
 
 export const unstable_settings = {
@@ -20,9 +21,10 @@ export default function RootLayout() {
   return (
     <QueryProvider>
       <AuthProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <AuthWrapper>
-            <Stack>
+        <RealtimeProvider>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <AuthWrapper>
+              <Stack>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="modal" options={{ presentation: 'modal', headerShown: false }} />
               <Stack.Screen name="product/[id]" options={{ presentation: 'modal', headerShown: false }} />
@@ -31,6 +33,8 @@ export default function RootLayout() {
               <Stack.Screen name="admin/index" options={{ headerShown: false }} />
               <Stack.Screen name="admin/new" options={{ headerShown: false }} />
               <Stack.Screen name="admin/[id]" options={{ headerShown: false }} />
+              <Stack.Screen name="admin/auctions" options={{ headerShown: false }} />
+              <Stack.Screen name="auction/[id]" options={{ headerShown: false }} />
               <Stack.Screen name="account/index" options={{ headerShown: false }} />
               <Stack.Screen name="account/orders" options={{ headerShown: false }} />
               <Stack.Screen name="account/orders/[id]" options={{ headerShown: false }} />
@@ -46,14 +50,15 @@ export default function RootLayout() {
               <Stack.Screen name="resources/special-reports" options={{ headerShown: false }} />
               <Stack.Screen name="resources/treasure-talk" options={{ headerShown: false }} />
               <Stack.Screen name="resources/videos" options={{ headerShown: false }} />
-            </Stack>
-          </AuthWrapper>
-          <StatusBar 
-            style={Platform.OS === 'ios' ? 'dark' : 'light'} 
-            backgroundColor={colorScheme === 'dark' ? '#000000' : '#1E3A8A'}
-            translucent={false}
-          />
-        </ThemeProvider>
+              </Stack>
+            </AuthWrapper>
+            <StatusBar 
+              style={Platform.OS === 'ios' ? 'dark' : 'light'} 
+              backgroundColor={colorScheme === 'dark' ? '#000000' : '#1E3A8A'}
+              translucent={false}
+            />
+          </ThemeProvider>
+        </RealtimeProvider>
       </AuthProvider>
     </QueryProvider>
   );
