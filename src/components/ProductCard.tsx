@@ -132,6 +132,7 @@ export function ProductCard({
               style={[styles.listImage, isSoldOut && styles.soldImage]}
               resizeMode="cover"
             />
+            {/* Only show SOLD badge in list view - stock indicator handles low stock */}
             {isSoldOut && (
               <View style={styles.saleBadge}>
                 <Text style={styles.saleBadgeText}>SOLD</Text>
@@ -163,10 +164,25 @@ export function ProductCard({
             )}
 
             <View style={styles.listFooter}>
-              <View style={styles.priceContainer}>
+              <View>
                 <Text style={styles.price}>
                   ${(product.price_cents / 100).toFixed(2)}
                 </Text>
+                {/* Stock indicator with dot - cleaner than badge */}
+                {!isSoldOut && (
+                  <View style={styles.stockRow}>
+                    <View style={[
+                      styles.stockDot,
+                      isLowStock && styles.lowStockDot
+                    ]} />
+                    <Text style={[
+                      styles.stockText,
+                      isLowStock && styles.lowStockText
+                    ]}>
+                      {isLowStock ? 'Low Stock' : 'In Stock'}
+                    </Text>
+                  </View>
+                )}
               </View>
 
               {!isSoldOut && (
