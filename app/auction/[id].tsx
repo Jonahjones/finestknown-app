@@ -18,10 +18,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuctionBadge } from '../../src/components/auction/AuctionBadge';
 import { CountdownTimer } from '../../src/components/auction/CountdownTimer';
 import { radius, spacing, typography } from '../../src/design/tokens';
+import { supabase } from '../../src/lib/supabase';
 import { useRealtime } from '../../src/providers/RealtimeProvider';
 import { Auction, Bid, getAuction, listAuctions, listBids, placeBid } from '../../src/services/auction';
 import { colors } from '../../src/theme';
-import { supabase } from '../../src/lib/supabase';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 

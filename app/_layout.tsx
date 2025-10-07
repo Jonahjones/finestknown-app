@@ -1,5 +1,5 @@
-import 'react-native-gesture-handler';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import 'react-native-gesture-handler';
 // Removed Stripe integration for simplified checkout
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
