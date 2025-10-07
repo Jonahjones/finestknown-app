@@ -87,6 +87,20 @@ export default function CatalogScreen() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  // Fetch category counts
+  const { data: categoryCounts } = useQuery({
+    queryKey: ['categoryCounts'],
+    queryFn: async () => {
+      const counts: { [key: string]: number } = {};
+      
+      // Get count for "All" category
+      const allProducts = await listProducts({ pageSize: 1 });
+      counts['all'] = allProducts.count || 0;
+      
+      return counts;
+    },
+  });
+
   // Create top-level category tabs
   const topLevelCategories = useMemo(() => {
     return [
@@ -336,30 +350,44 @@ export default function CatalogScreen() {
       {/* Category Tabs */}
       <View style={styles.tabsContainer}>
         <View style={styles.tabsScrollContainer}>
-          {topLevelCategories.map((category, index) => (
-            <TouchableOpacity
-              key={category.id}
-              style={[
-                styles.tab,
-                selectedCategory === category.slug && styles.tabActive
-              ]}
-              onPress={() => handleCategorySelect(category.slug)}
-            >
-              <Text
+          {topLevelCategories.map((category, index) => {
+            // Calculate the count to show for this category
+            const categoryCount = selectedCategory === category.slug 
+              ? processedProducts.length 
+              : (categoryCounts?.[category.slug] ?? data?.count ?? 0);
+
+            return (
+              <TouchableOpacity
+                key={category.id}
                 style={[
-                  styles.tabText,
-                  selectedCategory === category.slug && styles.tabTextActive
+                  styles.tab,
+                  selectedCategory === category.slug && styles.tabActive
                 ]}
+                onPress={() => handleCategorySelect(category.slug)}
               >
-                {category.name}
-              </Text>
-              {selectedCategory === category.slug && data && (
-                <View style={styles.tabBadge}>
-                  <Text style={styles.tabBadgeText}>{processedProducts.length}</Text>
+                <Text
+                  style={[
+                    styles.tabText,
+                    selectedCategory === category.slug && styles.tabTextActive
+                  ]}
+                >
+                  {category.name}
+                </Text>
+                {/* Always show badge to prevent size changes */}
+                <View style={[
+                  styles.tabBadge,
+                  selectedCategory === category.slug && styles.tabBadgeActive
+                ]}>
+                  <Text style={[
+                    styles.tabBadgeText,
+                    selectedCategory === category.slug && styles.tabBadgeTextActive
+                  ]}>
+                    {categoryCount}
+                  </Text>
                 </View>
-              )}
-            </TouchableOpacity>
-          ))}
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         {/* Animated indicator */}
@@ -647,18 +675,24 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   tabBadge: {
-    backgroundColor: colors.brand,
+    backgroundColor: colors.border,
     borderRadius: radii.pill,
     paddingHorizontal: 6,
     paddingVertical: 2,
     minWidth: 20,
     alignItems: 'center',
   },
+  tabBadgeActive: {
+    backgroundColor: colors.brand,
+  },
   tabBadgeText: {
     ...type.meta,
-    color: colors.surface,
+    color: colors.text.secondary,
     fontWeight: '700',
     fontSize: 10,
+  },
+  tabBadgeTextActive: {
+    color: colors.surface,
   },
   tabIndicator: {
     position: 'absolute',
