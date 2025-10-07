@@ -49,12 +49,6 @@ export default function HomeScreen() {
     setRefreshing(false);
   }, [refetchLatest]);
 
-  // Handle CTA buttons with haptics
-  const handleCTA = useCallback((route: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push(route as any);
-  }, []);
-
   // Toggle favorites
   const handleToggleFavorite = useCallback((productId: string) => {
     setFavorites(prev => {
@@ -129,25 +123,6 @@ export default function HomeScreen() {
             <Text style={styles.heroTagline}>
               Finest Precious Metals & Rare Coins
             </Text>
-            
-            {/* CTA Buttons */}
-            <View style={styles.ctaContainer}>
-              <TouchableOpacity 
-                style={[styles.ctaButton, styles.ctaPrimary]}
-                onPress={() => handleCTA('/catalog')}
-              >
-                <Ionicons name="storefront" size={18} color={colors.surface} />
-                <Text style={styles.ctaPrimaryText}>Shop Now</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.ctaButton, styles.ctaSecondary]}
-                onPress={() => handleCTA('/auctions')}
-              >
-                <Ionicons name="flash" size={18} color={colors.brand} />
-                <Text style={styles.ctaSecondaryText}>Live Auctions</Text>
-              </TouchableOpacity>
-            </View>
           </View>
         </Animated.View>
 
@@ -240,44 +215,6 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     textAlign: 'center',
     marginTop: spacing.sm,
-    marginBottom: spacing.lg,
-  },
-  
-  // CTA Buttons
-  ctaContainer: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    width: '100%',
-  },
-  ctaButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-    paddingVertical: spacing.md,
-    borderRadius: radii.md,
-    minHeight: 48,
-  },
-  ctaPrimary: {
-    backgroundColor: colors.brand,
-    ...shadow.card,
-  },
-  ctaPrimaryText: {
-    ...type.body,
-    color: colors.surface,
-    fontWeight: '700',
-  },
-  ctaSecondary: {
-    backgroundColor: colors.surface,
-    borderWidth: 2,
-    borderColor: colors.brand,
-    ...shadow.card,
-  },
-  ctaSecondaryText: {
-    ...type.body,
-    color: colors.brand,
-    fontWeight: '700',
   },
   
   // Sections
