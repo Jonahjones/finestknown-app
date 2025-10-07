@@ -420,9 +420,8 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: colors.surface,
-    borderRadius: radii.md,
+    borderRadius: 12,
     overflow: 'hidden',
-    padding: spacing.md,
     ...shadow.card,
   },
   soldCard: {
@@ -435,9 +434,7 @@ const styles = StyleSheet.create({
     aspectRatio: 4/3,
     backgroundColor: colors.border,
     position: 'relative',
-    borderRadius: radii.md,
     overflow: 'hidden',
-    marginBottom: spacing.md,
   },
   image: {
     width: '100%',
@@ -550,67 +547,69 @@ const styles = StyleSheet.create({
   
   // Content
   content: {
-    gap: spacing.xs,
+    padding: 10,
   },
   title: {
-    ...type.title,
+    fontSize: 14,
+    fontWeight: '600',
     color: colors.text.primary,
-    minHeight: 44, // 2 lines
-    marginBottom: spacing.xs,
+    lineHeight: 18,
+    minHeight: 36, // 2 lines: 18 * 2
+    marginBottom: 6,
   },
   
   // Price
   priceContainer: {
     flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: spacing.sm,
-    marginBottom: spacing.xs,
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 6,
   },
   price: {
-    ...type.title,
+    fontSize: 16,
+    fontWeight: '600',
     color: colors.text.primary,
-    fontWeight: '700',
   },
   
   // Stock indicator
   stockRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.md,
+    marginBottom: 8,
   },
   stockDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
     backgroundColor: colors.success,
-    marginRight: spacing.xs,
+    marginRight: 4,
   },
   lowStockDot: {
     backgroundColor: colors.danger,
   },
   stockText: {
-    ...type.meta,
+    fontSize: 11,
     color: colors.success,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   lowStockText: {
     color: colors.danger,
   },
   
-  // Add to Cart button - pill style
+  // Add to Cart button - Flash Sales style
   addToCartButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.brand,
-    paddingVertical: spacing.md,
-    borderRadius: radii.pill,
-    gap: spacing.xs,
-    minHeight: touchTarget.minHeight,
+    backgroundColor: colors.text.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    gap: 6,
   },
   addToCartText: {
-    ...type.body,
-    fontWeight: '700',
+    fontSize: 12,
+    fontWeight: '600',
     color: colors.surface,
   },
 
