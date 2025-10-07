@@ -220,14 +220,13 @@ export default function AuctionsScreen() {
   // Calculate stats
   const stats = React.useMemo(() => {
     const liveAuctions = auctions.filter(a => a.status === 'live');
-    const totalValue = liveAuctions.reduce((sum, a) => sum + a.currentCents, 0);
     const endingSoon = liveAuctions.filter(a => {
       const timeLeft = new Date(a.endAt).getTime() - Date.now();
       return timeLeft < 3600000; // Less than 1 hour
     });
     
     return {
-      totalValue,
+      liveCount: liveAuctions.length,
       endingSoonCount: endingSoon.length,
       nextAuction: auctions
         .filter(a => a.status === 'scheduled')
@@ -514,10 +513,7 @@ export default function AuctionsScreen() {
       {activeTab === 'live' && tabCounts.live > 0 && (
         <View style={styles.statsBar}>
           <View style={styles.statItem}>
-            <Text style={styles.statLabel}>Total Value</Text>
-            <Text style={styles.statValue}>
-              ${(stats.totalValue / 100).toLocaleString('en-US', { maximumFractionDigits: 0 })}
-            </Text>
+            <Text style={styles.statLabel}>{stats.liveCount} Active {stats.liveCount === 1 ? 'Auction' : 'Auctions'}</Text>
           </View>
           {stats.endingSoonCount > 0 && (
             <View style={styles.statItem}>
