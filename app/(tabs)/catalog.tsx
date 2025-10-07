@@ -47,6 +47,7 @@ export default function CatalogScreen() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showFilterSheet, setShowFilterSheet] = useState(false);
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>('featured');
@@ -55,7 +56,6 @@ export default function CatalogScreen() {
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [refreshing, setRefreshing] = useState(false);
   
-  const tabIndicatorAnim = useRef(new Animated.Value(0)).current;
   const searchInputRef = useRef<TextInput>(null);
 
   // Fetch categories
@@ -87,27 +87,68 @@ export default function CatalogScreen() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Fetch category counts
+  // Get product counts for each category
   const { data: categoryCounts } = useQuery({
     queryKey: ['categoryCounts'],
     queryFn: async () => {
+      if (!categoryTree) return {};
+      
       const counts: { [key: string]: number } = {};
       
       // Get count for "All" category
       const allProducts = await listProducts({ pageSize: 1 });
       counts['all'] = allProducts.count || 0;
       
+      // Get counts for each category
+      const flattenCategories = (categories: (Category & { children?: Category[] })[]): Category[] => {
+        const result: Category[] = [];
+        const addCategory = (cat: Category & { children?: Category[] }) => {
+          result.push(cat);
+          if (cat.children) {
+            cat.children.forEach(addCategory);
+          }
+        };
+        categories.forEach(addCategory);
+        return result;
+      };
+      
+      const flatCategories = flattenCategories(categoryTree);
+      
+      for (const category of flatCategories) {
+        try {
+          const products = await listProducts({ 
+            categorySlug: category.slug, 
+            pageSize: 1 
+          });
+          counts[category.slug] = products.count || 0;
+        } catch (error) {
+          console.error(`Error getting count for category ${category.slug}:`, error);
+          counts[category.slug] = 0;
+        }
+      }
+      
       return counts;
     },
+    enabled: !!categoryTree,
   });
 
-  // Create top-level category tabs
-  const topLevelCategories = useMemo(() => {
-    return [
-      { id: 'all', name: 'All', slug: 'all' },
-      ...categoryTree.slice(0, 5), // Show top 5 categories as tabs
-    ];
-  }, [categoryTree]);
+  // Flatten category tree for display
+  const flattenCategories = (categories: (Category & { children?: Category[] })[]): Category[] => {
+    const result: Category[] = [];
+    const addCategory = (cat: Category & { children?: Category[] }) => {
+      result.push(cat);
+      if (cat.children) {
+        cat.children.forEach(addCategory);
+      }
+    };
+    categories.forEach(addCategory);
+    return result;
+  };
+
+  const categories = categoryTree ? [
+    { id: 'all', name: 'All', slug: 'all', parent_id: null, sort_order: 0 },
+    ...flattenCategories(categoryTree)
+  ] : [];
 
   // Filter and sort products
   const processedProducts = useMemo(() => {
@@ -176,17 +217,9 @@ export default function CatalogScreen() {
   const handleCategorySelect = useCallback((slug: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSelectedCategory(slug);
+    setShowCategoryDropdown(false);
     analytics.track('category_selected', { category: slug });
-
-    // Animate tab indicator
-    const index = topLevelCategories.findIndex(c => c.slug === slug);
-    Animated.spring(tabIndicatorAnim, {
-      toValue: index,
-      useNativeDriver: true,
-      tension: 120,
-      friction: 10,
-    }).start();
-  }, [topLevelCategories, tabIndicatorAnim]);
+  }, []);
 
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
@@ -347,66 +380,32 @@ export default function CatalogScreen() {
         )}
       </View>
 
-      {/* Category Tabs */}
-      <View style={styles.tabsContainer}>
-        <View style={styles.tabsScrollContainer}>
-          {topLevelCategories.map((category, index) => {
-            // Calculate the count to show for this category
-            const categoryCount = selectedCategory === category.slug 
-              ? processedProducts.length 
-              : (categoryCounts?.[category.slug] ?? data?.count ?? 0);
-
-            return (
-              <TouchableOpacity
-                key={category.id}
-                style={[
-                  styles.tab,
-                  selectedCategory === category.slug && styles.tabActive
-                ]}
-                onPress={() => handleCategorySelect(category.slug)}
-              >
-                <Text
-                  style={[
-                    styles.tabText,
-                    selectedCategory === category.slug && styles.tabTextActive
-                  ]}
-                >
-                  {category.name}
-                </Text>
-                {/* Always show badge to prevent size changes */}
-                <View style={[
-                  styles.tabBadge,
-                  selectedCategory === category.slug && styles.tabBadgeActive
-                ]}>
-                  <Text style={[
-                    styles.tabBadgeText,
-                    selectedCategory === category.slug && styles.tabBadgeTextActive
-                  ]}>
-                    {categoryCount}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
-        {/* Animated indicator */}
-        {topLevelCategories.length > 0 && (
-          <Animated.View
-            style={[
-              styles.tabIndicator,
-              {
-                transform: [{
-                  translateX: tabIndicatorAnim.interpolate({
-                    inputRange: [0, topLevelCategories.length - 1],
-                    outputRange: [0, (width / topLevelCategories.length) * (topLevelCategories.length - 1)],
-                  }),
-                }],
-                width: width / topLevelCategories.length,
-              },
-            ]}
+      {/* Category Dropdown Button */}
+      <View style={styles.categoryDropdownContainer}>
+        <TouchableOpacity
+          style={styles.categoryDropdownButton}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setShowCategoryDropdown(!showCategoryDropdown);
+          }}
+        >
+          <View style={styles.categoryDropdownContent}>
+            <Ionicons name="grid-outline" size={20} color={colors.brand} />
+            <Text style={styles.categoryDropdownText}>
+              {categories.find(cat => cat.slug === selectedCategory)?.name || 'All Categories'}
+            </Text>
+            {data && (
+              <View style={styles.categoryCountBadge}>
+                <Text style={styles.categoryCountText}>{processedProducts.length}</Text>
+              </View>
+            )}
+          </View>
+          <Ionicons 
+            name={showCategoryDropdown ? "chevron-up" : "chevron-down"} 
+            size={20} 
+            color={colors.text.primary} 
           />
-        )}
+        </TouchableOpacity>
       </View>
 
       {/* Quick Filters Bar */}
@@ -561,6 +560,57 @@ export default function CatalogScreen() {
         onApplyFilters={handleApplyFilters}
       />
 
+      {/* Category Dropdown Modal */}
+      <Modal
+        visible={showCategoryDropdown}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCategoryDropdown(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowCategoryDropdown(false)}
+        >
+          <View style={styles.dropdownMenu}>
+            <Text style={styles.dropdownMenuTitle}>Browse Categories</Text>
+            
+            <FlatList
+              data={categories}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.dropdownMenuItem,
+                    selectedCategory === item.slug && styles.dropdownMenuItemActive
+                  ]}
+                  onPress={() => handleCategorySelect(item.slug)}
+                >
+                  <View style={styles.dropdownMenuItemContent}>
+                    <Text style={[
+                      styles.dropdownMenuItemText,
+                      selectedCategory === item.slug && styles.dropdownMenuItemTextActive
+                    ]}>
+                      {item.name}
+                    </Text>
+                    <Text style={[
+                      styles.dropdownMenuItemCount,
+                      selectedCategory === item.slug && styles.dropdownMenuItemCountActive
+                    ]}>
+                      {categoryCounts?.[item.slug] || 0} items
+                    </Text>
+                  </View>
+                  {selectedCategory === item.slug && (
+                    <Ionicons name="checkmark" size={20} color={colors.brand} />
+                  )}
+                </TouchableOpacity>
+              )}
+              keyExtractor={(item) => item.id}
+              showsVerticalScrollIndicator={false}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
       {/* Sort Menu */}
       <Modal
         visible={showSortMenu}
@@ -642,64 +692,49 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
 
-  // Tabs
-  tabsContainer: {
-    position: 'relative',
+  // Category Dropdown Button
+  categoryDropdownContainer: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  tabsScrollContainer: {
+  categoryDropdownButton: {
     flexDirection: 'row',
-    paddingHorizontal: spacing.md,
-  },
-  tab: {
-    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingVertical: spacing.md,
-    paddingHorizontal: spacing.sm,
-    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.bg,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  categoryDropdownContent: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    gap: spacing.xs,
+    alignItems: 'center',
+    gap: spacing.sm,
+    flex: 1,
   },
-  tabActive: {
-    // Active styling handled by indicator
+  categoryDropdownText: {
+    ...type.title,
+    color: colors.text.primary,
+    flex: 1,
   },
-  tabText: {
-    ...type.body,
-    color: colors.text.secondary,
-    fontWeight: '600',
-  },
-  tabTextActive: {
-    color: colors.brand,
-    fontWeight: '700',
-  },
-  tabBadge: {
-    backgroundColor: colors.border,
+  categoryCountBadge: {
+    backgroundColor: colors.brand,
     borderRadius: radii.pill,
-    paddingHorizontal: 6,
+    paddingHorizontal: spacing.sm,
     paddingVertical: 2,
-    minWidth: 20,
+    minWidth: 24,
     alignItems: 'center',
   },
-  tabBadgeActive: {
-    backgroundColor: colors.brand,
-  },
-  tabBadgeText: {
+  categoryCountText: {
     ...type.meta,
-    color: colors.text.secondary,
-    fontWeight: '700',
-    fontSize: 10,
-  },
-  tabBadgeTextActive: {
     color: colors.surface,
-  },
-  tabIndicator: {
-    position: 'absolute',
-    bottom: 0,
-    height: 3,
-    backgroundColor: colors.brand,
-    borderRadius: 2,
+    fontWeight: '700',
+    fontSize: 11,
   },
 
   // Quick Filters
@@ -878,12 +913,63 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  // Sort Menu
+  // Modals
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
+  
+  // Category Dropdown Menu
+  dropdownMenu: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: radii.lg,
+    borderTopRightRadius: radii.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xl,
+    maxHeight: '70%',
+    ...shadow.sticky,
+  },
+  dropdownMenuTitle: {
+    ...type.h2,
+    color: colors.text.primary,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  dropdownMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  dropdownMenuItemActive: {
+    backgroundColor: colors.bg,
+  },
+  dropdownMenuItemContent: {
+    flex: 1,
+  },
+  dropdownMenuItemText: {
+    ...type.title,
+    color: colors.text.primary,
+    marginBottom: 2,
+  },
+  dropdownMenuItemTextActive: {
+    fontWeight: '700',
+    color: colors.brand,
+  },
+  dropdownMenuItemCount: {
+    ...type.meta,
+    color: colors.text.secondary,
+  },
+  dropdownMenuItemCountActive: {
+    color: colors.brand,
+    fontWeight: '700',
+  },
+
+  // Sort Menu
   sortMenu: {
     backgroundColor: colors.surface,
     borderTopLeftRadius: radii.lg,
