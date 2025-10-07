@@ -4,7 +4,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Animated,
   Dimensions,
@@ -14,10 +13,10 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Swipeable } from 'react-native-gesture-handler';
+import { SafeAreaView } from 'react-native-safe-area-context';
 // Haptics will be added - for now using silent fallbacks
 const Haptics = {
   impactAsync: async (_style?: any) => {},
@@ -69,7 +68,7 @@ function CartItemSkeleton() {
 
 export default function CartScreen() {
   const { data: cartItems, isLoading, refetch } = useCartQuery();
-  const { data: itemCount } = useCartItemCount();
+  const itemCount = useCartItemCount();
   const removeFromCartMutation = useRemoveFromCartMutation();
   const updateQuantityMutation = useUpdateCartQuantityMutation();
   const [refreshing, setRefreshing] = useState(false);
@@ -444,7 +443,7 @@ const styles = StyleSheet.create({
   cartList: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
-    paddingBottom: 100,
+    paddingBottom: 400, // Increased to accommodate sticky checkout container
   },
   cartItem: {
     flexDirection: 'row',
