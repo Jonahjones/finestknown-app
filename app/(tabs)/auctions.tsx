@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Animated, FlatList, Image, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuctionBadge } from '../../src/components/auction/AuctionBadge';
 import { CountdownTimer } from '../../src/components/auction/CountdownTimer';
@@ -9,11 +9,82 @@ import { useRealtime } from '../../src/providers/RealtimeProvider';
 import { Auction, listAuctions } from '../../src/services/auction';
 import { colors, shadow } from '../../src/theme';
 
+// Haptics fallback
+const Haptics = {
+  impactAsync: async (_style?: any) => {},
+  ImpactFeedbackStyle: { Light: 'light', Medium: 'medium' },
+};
+
 type TabType = 'live' | 'upcoming' | 'closed';
+
+// Skeleton Loader Component
+function AuctionCardSkeleton() {
+  const pulseAnim = useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 0,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
+
+  const opacity = pulseAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.3, 0.7],
+  });
+
+  return (
+    <View style={styles.card}>
+      <Animated.View style={[styles.skeletonImage, { opacity }]} />
+      <View style={styles.cardContent}>
+        <Animated.View style={[styles.skeletonTitle, { opacity }]} />
+        <Animated.View style={[styles.skeletonPrice, { opacity }]} />
+        <Animated.View style={[styles.skeletonFooter, { opacity }]} />
+      </View>
+    </View>
+  );
+}
+
+// Pulsing Live Indicator
+function LiveIndicator() {
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  React.useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.3,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
+
+  return (
+    <Animated.View style={[styles.liveIndicator, { transform: [{ scale: pulseAnim }] }]} />
+  );
+}
 
 export default function AuctionsScreen() {
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('live');
   const { subscribe, unsubscribe } = useRealtime();
 
@@ -28,6 +99,13 @@ export default function AuctionsScreen() {
       setLoading(false);
     }
   }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await fetchAuctions();
+    setRefreshing(false);
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -87,73 +165,129 @@ export default function AuctionsScreen() {
   }, [auctions]);
 
   const handleAuctionPress = (id: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push(`/auction/${id}` as any);
   };
 
-  const renderAuctionCard = ({ item }: { item: Auction }) => (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => handleAuctionPress(item.id)}
-      activeOpacity={0.8}
-    >
-      <View style={styles.imageWrapper}>
-        <Image
-          source={{
-            uri: item.imageUrl || 'https://via.placeholder.com/300x300/F7F6F3/999?text=No+Image',
-          }}
-          style={styles.image}
-          resizeMode="cover"
-        />
-        <View style={styles.imageOverlay}>
-          <AuctionBadge status={item.status} compact />
-        </View>
-      </View>
+  const handleTabPress = (tab: TabType) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setActiveTab(tab);
+  };
 
-      <View style={styles.cardContent}>
-        <Text style={styles.title} numberOfLines={2}>
-          {item.title}
-        </Text>
+  const renderAuctionCard = ({ item }: { item: Auction }) => {
+    const scaleAnim = useRef(new Animated.Value(1)).current;
 
-        <View style={styles.bidContainer}>
-          <Text style={styles.bidLabel}>
-            {item.status === 'ended' ? 'Final Price' : 'Current Bid'}
-          </Text>
-          <Text style={styles.currentBid}>
-            ${(item.currentCents / 100).toLocaleString('en-US', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </Text>
-        </View>
+    const handlePressIn = () => {
+      Animated.spring(scaleAnim, {
+        toValue: 0.98,
+        useNativeDriver: true,
+      }).start();
+    };
 
-        {item.status !== 'ended' && (
-          <View style={styles.footer}>
-            <View style={styles.timeContainer}>
-              <Text style={styles.timeIcon}>⏱</Text>
-              <CountdownTimer endAt={item.endAt} />
+    const handlePressOut = () => {
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+      }).start();
+    };
+
+    // Mock bid count - in production, would come from API
+    const bidCount = Math.floor(Math.random() * 20) + 1;
+
+    return (
+      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => handleAuctionPress(item.id)}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          activeOpacity={1}
+        >
+          <View style={styles.imageWrapper}>
+            <Image
+              source={{
+                uri: item.imageUrl || 'https://via.placeholder.com/300x300/F7F6F3/999?text=No+Image',
+              }}
+              style={styles.image}
+              resizeMode="cover"
+            />
+            <View style={styles.imageOverlay}>
+              {item.status === 'live' && (
+                <View style={styles.liveContainer}>
+                  <LiveIndicator />
+                </View>
+              )}
+              <AuctionBadge status={item.status} compact />
             </View>
-            <View style={styles.bidButtonSmall}>
-              <Text style={styles.bidButtonText}>
-                {item.status === 'live' ? 'Bid' : 'View'}
+          </View>
+
+          <View style={styles.cardContent}>
+            <Text style={styles.title} numberOfLines={2}>
+              {item.title}
+            </Text>
+
+            <View style={styles.bidContainer}>
+              <Text style={styles.bidLabel}>
+                {item.status === 'ended' ? 'Final Price' : 'Current Bid'}
               </Text>
+              <Text style={styles.currentBid}>
+                ${(item.currentCents / 100).toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </Text>
+              {/* Bid count badge */}
+              {item.status !== 'ended' && (
+                <Text style={styles.bidCountBadge}>{bidCount} bids</Text>
+              )}
             </View>
-          </View>
-        )}
 
-        {item.status === 'ended' && (
-          <View style={styles.footer}>
-            <Text style={styles.endedText}>Auction Ended</Text>
+            {item.status !== 'ended' && (
+              <View style={styles.footer}>
+                <View style={styles.timeContainer}>
+                  <Text style={styles.timeIcon}>⏱</Text>
+                  <CountdownTimer endAt={item.endAt} />
+                </View>
+                <View style={styles.bidButtonSmall}>
+                  <Text style={styles.bidButtonText}>
+                    {item.status === 'live' ? 'Bid' : 'View'}
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            {item.status === 'ended' && (
+              <View style={styles.footer}>
+                <Text style={styles.endedText}>Auction Ended</Text>
+              </View>
+            )}
           </View>
-        )}
-      </View>
-    </TouchableOpacity>
-  );
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  };
 
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color={colors.brand} />
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Auctions</Text>
+        </View>
+        <View style={styles.tabBar}>
+          <View style={[styles.tab, styles.tabActive]}>
+            <Text style={styles.tabTextActive}>🔴 Live</Text>
+          </View>
+          <View style={styles.tab}>
+            <Text style={styles.tabText}>📅 Upcoming</Text>
+          </View>
+          <View style={styles.tab}>
+            <Text style={styles.tabText}>🏁 Closed</Text>
+          </View>
+        </View>
+        <View style={styles.skeletonContainer}>
+          <AuctionCardSkeleton />
+          <AuctionCardSkeleton />
+          <AuctionCardSkeleton />
         </View>
       </SafeAreaView>
     );
@@ -172,7 +306,7 @@ export default function AuctionsScreen() {
       <View style={styles.tabBar}>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'live' && styles.tabActive]}
-          onPress={() => setActiveTab('live')}
+          onPress={() => handleTabPress('live')}
         >
           <Text style={[styles.tabText, activeTab === 'live' && styles.tabTextActive]}>
             🔴 Live
@@ -188,7 +322,7 @@ export default function AuctionsScreen() {
 
         <TouchableOpacity
           style={[styles.tab, activeTab === 'upcoming' && styles.tabActive]}
-          onPress={() => setActiveTab('upcoming')}
+          onPress={() => handleTabPress('upcoming')}
         >
           <Text style={[styles.tabText, activeTab === 'upcoming' && styles.tabTextActive]}>
             📅 Upcoming
@@ -204,7 +338,7 @@ export default function AuctionsScreen() {
 
         <TouchableOpacity
           style={[styles.tab, activeTab === 'closed' && styles.tabActive]}
-          onPress={() => setActiveTab('closed')}
+          onPress={() => handleTabPress('closed')}
         >
           <Text style={[styles.tabText, activeTab === 'closed' && styles.tabTextActive]}>
             🏁 Closed
@@ -225,6 +359,14 @@ export default function AuctionsScreen() {
         renderItem={renderAuctionCard}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.brand}
+            colors={[colors.brand]}
+          />
+        }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>
@@ -346,6 +488,21 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: spacing.md,
     right: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  liveContainer: {
+    width: 12,
+    height: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  liveIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#D32F2F',
   },
   cardContent: {
     padding: spacing.lg,
@@ -378,6 +535,12 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: typography.weights.bold,
     color: '#D32F2F',
+  },
+  bidCountBadge: {
+    fontSize: typography.caption.size,
+    color: colors.text.secondary,
+    marginTop: 4,
+    fontWeight: typography.weights.medium,
   },
   footer: {
     flexDirection: 'row',
@@ -428,5 +591,34 @@ const styles = StyleSheet.create({
   emptySubtext: {
     fontSize: typography.body.size,
     color: colors.text.muted,
+  },
+  // Skeleton styles
+  skeletonContainer: {
+    padding: spacing.md,
+  },
+  skeletonImage: {
+    width: '100%',
+    height: 280,
+    backgroundColor: colors.border,
+  },
+  skeletonTitle: {
+    height: 20,
+    backgroundColor: colors.border,
+    borderRadius: 4,
+    marginBottom: spacing.md,
+    width: '80%',
+  },
+  skeletonPrice: {
+    height: 32,
+    backgroundColor: colors.border,
+    borderRadius: 4,
+    marginBottom: spacing.md,
+    width: '50%',
+  },
+  skeletonFooter: {
+    height: 40,
+    backgroundColor: colors.border,
+    borderRadius: 4,
+    width: '100%',
   },
 });
