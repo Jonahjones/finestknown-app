@@ -1,18 +1,35 @@
+import { listProducts } from '@/src/api/products';
 import { AppHeader } from '@/src/components/AppHeader';
 import { FinestKnownLogo } from '@/src/components/FinestKnownLogo';
 import { FlashSaleCarousel } from '@/src/components/FlashSaleCarousel';
+import { ProductCard } from '@/src/components/ProductCard';
+import { ProductCardSkeleton } from '@/src/components/ProductCardSkeleton';
 import { QuickShopGrid, ResourceItem, SectionHeader } from '@/src/components/home';
 import { colors, radii, shadow, spacing, type } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
+import { useQuery } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Dimensions, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  // Fetch latest 6 products
+  const { data: latestProductsData, isLoading: isLoadingLatest, refetch: refetchLatest } = useQuery({
+    queryKey: ['latest-products-home'],
+    queryFn: () => listProducts({ 
+      page: 1, 
+      pageSize: 6, 
+      sort: 'newest'
+    }),
+  });
 
   // Entrance animation
   useEffect(() => {
@@ -27,16 +44,69 @@ export default function HomeScreen() {
   const onRefresh = useCallback(async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setRefreshing(true);
-    // Refresh logic here if needed
+    await refetchLatest();
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setRefreshing(false);
-  }, []);
+  }, [refetchLatest]);
 
   // Handle CTA buttons with haptics
   const handleCTA = useCallback((route: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push(route as any);
   }, []);
+
+  // Toggle favorites
+  const handleToggleFavorite = useCallback((productId: string) => {
+    setFavorites(prev => {
+      const next = new Set(prev);
+      if (next.has(productId)) {
+        next.delete(productId);
+      } else {
+        next.add(productId);
+      }
+      return next;
+    });
+  }, []);
+
+  // Render latest products grid
+  const renderLatestProducts = () => {
+    if (isLoadingLatest) {
+      return (
+        <View style={styles.latestProductsGrid}>
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <View key={i} style={styles.productCardWrapper}>
+              <ProductCardSkeleton />
+            </View>
+          ))}
+        </View>
+      );
+    }
+
+    if (!latestProductsData?.items?.length) {
+      return (
+        <View style={styles.emptyContainer}>
+          <Ionicons name="cube-outline" size={48} color={colors.text.muted} />
+          <Text style={styles.emptyText}>No products available yet</Text>
+          <Text style={styles.emptySubtext}>Check back soon for new arrivals!</Text>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.latestProductsGrid}>
+        {latestProductsData.items.slice(0, 6).map((product) => (
+          <View key={product.id} style={styles.productCardWrapper}>
+            <ProductCard 
+              product={product}
+              onToggleFavorite={handleToggleFavorite}
+              isFavorite={favorites.has(product.id)}
+              showQuickView={true}
+            />
+          </View>
+        ))}
+      </View>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -87,16 +157,15 @@ export default function HomeScreen() {
         {/* Flash Sale Carousel */}
         <FlashSaleCarousel />
 
-        {/* Browse All CTA */}
-        <View style={styles.browseAllSection}>
-          <TouchableOpacity 
-            style={styles.browseAllButton}
-            onPress={() => handleCTA('/catalog')}
-          >
-            <Ionicons name="grid" size={24} color={colors.surface} />
-            <Text style={styles.browseAllText}>Browse All Products</Text>
-            <Ionicons name="arrow-forward" size={20} color={colors.surface} />
-          </TouchableOpacity>
+        {/* Latest Arrivals - Now with unified card design! */}
+        <View style={styles.section}>
+          <SectionHeader 
+            title="Latest Arrivals" 
+            subtitle="Newest additions to our collection"
+            ctaText="View All"
+            onCtaPress={() => router.push('/catalog')}
+          />
+          {renderLatestProducts()}
         </View>
 
         {/* Resources Section - Enhanced PHASE 2 */}
@@ -218,26 +287,31 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   
-  // Browse All Section
-  browseAllSection: {
-    paddingHorizontal: spacing.lg,
-    marginTop: spacing.xl,
-    marginBottom: spacing.xl,
-  },
-  browseAllButton: {
+  // Latest Products Grid
+  latestProductsGrid: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
     gap: spacing.md,
-    backgroundColor: colors.brand,
-    paddingVertical: spacing.lg,
-    borderRadius: radii.md,
-    ...shadow.card,
   },
-  browseAllText: {
+  productCardWrapper: {
+    width: (width - spacing.lg * 2 - spacing.md) / 2,
+  },
+  
+  // Empty State
+  emptyContainer: {
+    paddingVertical: spacing.xl * 2,
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  emptyText: {
     ...type.title,
-    color: colors.surface,
-    fontWeight: '700',
+    color: colors.text.primary,
+    marginTop: spacing.md,
+  },
+  emptySubtext: {
+    ...type.body,
+    color: colors.text.secondary,
   },
   
   // Trust Section
