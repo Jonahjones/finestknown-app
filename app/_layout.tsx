@@ -1,8 +1,10 @@
+import 'react-native-gesture-handler';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 // Removed Stripe integration for simplified checkout
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Platform } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -19,11 +21,12 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   return (
-    <QueryProvider>
-      <AuthProvider>
-        <RealtimeProvider>
-          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-            <AuthWrapper>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <QueryProvider>
+        <AuthProvider>
+          <RealtimeProvider>
+            <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+              <AuthWrapper>
               <Stack>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="modal" options={{ presentation: 'modal', headerShown: false }} />
@@ -61,5 +64,6 @@ export default function RootLayout() {
         </RealtimeProvider>
       </AuthProvider>
     </QueryProvider>
+    </GestureHandlerRootView>
   );
 }
