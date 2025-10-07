@@ -5,7 +5,7 @@ import { FinestKnownLogo } from '@/src/components/FinestKnownLogo';
 import { FlashSaleCarousel } from '@/src/components/FlashSaleCarousel';
 import { ProductCard } from '@/src/components/ProductCard';
 import { ProductCardSkeleton } from '@/src/components/ProductCardSkeleton';
-import { QuickShopGrid, ResourceItem, SectionHeader, SocialProofBanner } from '@/src/components/home';
+import { QuickShopGrid, ResourceItem, SectionHeader } from '@/src/components/home';
 import { colors, radii, shadow, spacing, type } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
@@ -157,9 +157,6 @@ export default function HomeScreen() {
 
         {/* Quick Shop Grid - PHASE 1 */}
         <QuickShopGrid />
-
-        {/* Social Proof Banner - PHASE 3 */}
-        <SocialProofBanner />
 
         {/* Flash Sale Carousel - Enhanced PHASE 2 */}
         <FlashSaleCarousel />
