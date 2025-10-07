@@ -1,6 +1,7 @@
+import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, FlatList, Image, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Dimensions, FlatList, Image, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuctionBadge } from '../../src/components/auction/AuctionBadge';
 import { CountdownTimer } from '../../src/components/auction/CountdownTimer';
@@ -9,6 +10,8 @@ import { useRealtime } from '../../src/providers/RealtimeProvider';
 import { Auction, listAuctions } from '../../src/services/auction';
 import { colors, shadow } from '../../src/theme';
 
+const SCREEN_WIDTH = Dimensions.get('window').width;
+
 // Haptics fallback
 const Haptics = {
   impactAsync: async (_style?: any) => {},
@@ -16,6 +19,7 @@ const Haptics = {
 };
 
 type TabType = 'live' | 'upcoming' | 'closed';
+type SortType = 'ending' | 'highest' | 'newest';
 
 // Skeleton Loader Component
 function AuctionCardSkeleton() {
@@ -81,12 +85,52 @@ function LiveIndicator() {
   );
 }
 
+// Pulsing Badge for Live Tab
+function PulsingBadge({ count, active }: { count: number; active: boolean }) {
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  React.useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
+
+  return (
+    <Animated.View style={[
+      styles.badge,
+      active && styles.badgeActive,
+      { transform: [{ scale: pulseAnim }] }
+    ]}>
+      <Text style={[styles.badgeText, active && styles.badgeTextActive]}>
+        {count}
+      </Text>
+    </Animated.View>
+  );
+}
+
 export default function AuctionsScreen() {
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('live');
+  const [sortBy, setSortBy] = useState<SortType>('ending');
+  const [showSortMenu, setShowSortMenu] = useState(false);
   const { subscribe, unsubscribe } = useRealtime();
+  
+  // Animations
+  const tabIndicatorAnim = useRef(new Animated.Value(0)).current;
+  const contentFadeAnim = useRef(new Animated.Value(1)).current;
 
   const fetchAuctions = useCallback(async () => {
     try {
@@ -142,19 +186,28 @@ export default function AuctionsScreen() {
   }, [auctions.length, subscribe, unsubscribe]);
 
   const filteredAuctions = React.useMemo(() => {
-    const filtered = auctions.filter((a) => {
+    let filtered = auctions.filter((a) => {
       if (activeTab === 'live') return a.status === 'live';
       if (activeTab === 'upcoming') return a.status === 'scheduled';
       if (activeTab === 'closed') return a.status === 'ended';
       return false;
     });
 
-    // Sort appropriately
-    if (activeTab === 'closed') {
-      return filtered.sort((a, b) => new Date(b.endAt).getTime() - new Date(a.endAt).getTime());
+    // Apply sorting
+    if (sortBy === 'ending') {
+      filtered = filtered.sort((a, b) => 
+        activeTab === 'closed' 
+          ? new Date(b.endAt).getTime() - new Date(a.endAt).getTime()
+          : new Date(a.endAt).getTime() - new Date(b.endAt).getTime()
+      );
+    } else if (sortBy === 'highest') {
+      filtered = filtered.sort((a, b) => b.currentCents - a.currentCents);
+    } else if (sortBy === 'newest') {
+      filtered = filtered.sort((a, b) => new Date(b.endAt).getTime() - new Date(a.endAt).getTime());
     }
-    return filtered.sort((a, b) => new Date(a.endAt).getTime() - new Date(b.endAt).getTime());
-  }, [auctions, activeTab]);
+
+    return filtered;
+  }, [auctions, activeTab, sortBy]);
 
   const tabCounts = React.useMemo(() => {
     return {
@@ -164,88 +217,204 @@ export default function AuctionsScreen() {
     };
   }, [auctions]);
 
+  // Calculate stats
+  const stats = React.useMemo(() => {
+    const liveAuctions = auctions.filter(a => a.status === 'live');
+    const totalValue = liveAuctions.reduce((sum, a) => sum + a.currentCents, 0);
+    const endingSoon = liveAuctions.filter(a => {
+      const timeLeft = new Date(a.endAt).getTime() - Date.now();
+      return timeLeft < 3600000; // Less than 1 hour
+    });
+    
+    return {
+      totalValue,
+      endingSoonCount: endingSoon.length,
+      nextAuction: auctions
+        .filter(a => a.status === 'scheduled')
+        .sort((a, b) => new Date(a.endAt).getTime() - new Date(b.endAt).getTime())[0],
+    };
+  }, [auctions]);
+
   const handleAuctionPress = (id: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push(`/auction/${id}` as any);
   };
 
   const handleTabPress = (tab: TabType) => {
+    if (tab === activeTab) return;
+    
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setActiveTab(tab);
+    
+    // Fade out content
+    Animated.timing(contentFadeAnim, {
+      toValue: 0,
+      duration: 150,
+      useNativeDriver: true,
+    }).start(() => {
+      setActiveTab(tab);
+      
+      // Animate tab indicator
+      const tabIndex = tab === 'live' ? 0 : tab === 'upcoming' ? 1 : 2;
+      Animated.spring(tabIndicatorAnim, {
+        toValue: tabIndex,
+        useNativeDriver: true,
+        tension: 80,
+        friction: 10,
+      }).start();
+      
+      // Fade in content
+      Animated.timing(contentFadeAnim, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: true,
+      }).start();
+    });
   };
 
   const renderAuctionCard = ({ item }: { item: Auction }) => {
     // Mock bid count - in production, would come from API
     const bidCount = Math.floor(Math.random() * 20) + 1;
+    
+    // Check if ending soon
+    const timeLeft = new Date(item.endAt).getTime() - Date.now();
+    const isEndingSoon = item.status === 'live' && timeLeft < 3600000;
 
     return (
       <TouchableOpacity
-        style={styles.card}
+        style={[styles.card, isEndingSoon && styles.cardEndingSoon]}
         onPress={() => handleAuctionPress(item.id)}
         activeOpacity={0.8}
       >
-          <View style={styles.imageWrapper}>
-            <Image
-              source={{
-                uri: item.imageUrl || 'https://via.placeholder.com/300x300/F7F6F3/999?text=No+Image',
-              }}
-              style={styles.image}
-              resizeMode="cover"
-            />
-            <View style={styles.imageOverlay}>
-              {item.status === 'live' && (
-                <View style={styles.liveContainer}>
-                  <LiveIndicator />
-                </View>
-              )}
-              <AuctionBadge status={item.status} compact />
-            </View>
+        {isEndingSoon && (
+          <View style={styles.endingSoonBanner}>
+            <Ionicons name="flash" size={16} color="#D32F2F" />
+            <Text style={styles.endingSoonText}>ENDING SOON</Text>
           </View>
+        )}
+        
+        <View style={styles.imageWrapper}>
+          <Image
+            source={{
+              uri: item.imageUrl || 'https://via.placeholder.com/300x300/F7F6F3/999?text=No+Image',
+            }}
+            style={styles.image}
+            resizeMode="cover"
+          />
+          <View style={styles.imageOverlay}>
+            {item.status === 'live' && (
+              <View style={styles.liveContainer}>
+                <LiveIndicator />
+              </View>
+            )}
+            <AuctionBadge status={item.status} compact />
+          </View>
+        </View>
 
-          <View style={styles.cardContent}>
-            <Text style={styles.title} numberOfLines={2}>
-              {item.title}
+        <View style={styles.cardContent}>
+          <Text style={styles.title} numberOfLines={2}>
+            {item.title}
+          </Text>
+
+          <View style={styles.bidContainer}>
+            <Text style={styles.bidLabel}>
+              {item.status === 'ended' ? 'Final Price' : 'Current Bid'}
             </Text>
-
-            <View style={styles.bidContainer}>
-              <Text style={styles.bidLabel}>
-                {item.status === 'ended' ? 'Final Price' : 'Current Bid'}
-              </Text>
-              <Text style={styles.currentBid}>
-                ${(item.currentCents / 100).toLocaleString('en-US', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </Text>
-              {/* Bid count badge */}
-              {item.status !== 'ended' && (
-                <Text style={styles.bidCountBadge}>{bidCount} bids</Text>
-              )}
-            </View>
-
+            <Text style={styles.currentBid}>
+              ${(item.currentCents / 100).toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </Text>
             {item.status !== 'ended' && (
-              <View style={styles.footer}>
-                <View style={styles.timeContainer}>
-                  <Text style={styles.timeIcon}>⏱</Text>
-                  <CountdownTimer endAt={item.endAt} />
-                </View>
-                <View style={styles.bidButtonSmall}>
-                  <Text style={styles.bidButtonText}>
-                    {item.status === 'live' ? 'Bid' : 'View'}
-                  </Text>
-                </View>
-              </View>
-            )}
-
-            {item.status === 'ended' && (
-              <View style={styles.footer}>
-                <Text style={styles.endedText}>Auction Ended</Text>
-              </View>
+              <Text style={styles.bidCountBadge}>{bidCount} bids</Text>
             )}
           </View>
-        </TouchableOpacity>
+
+          {item.status !== 'ended' && (
+            <View style={styles.footer}>
+              <View style={styles.timeContainer}>
+                <Text style={styles.timeIcon}>⏱</Text>
+                <CountdownTimer endAt={item.endAt} />
+              </View>
+              <View style={styles.bidButtonSmall}>
+                <Text style={styles.bidButtonText}>
+                  {item.status === 'live' ? 'Bid' : 'View'}
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {item.status === 'ended' && (
+            <View style={styles.footer}>
+              <Text style={styles.endedText}>Auction Ended</Text>
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
     );
   };
+
+  const renderEmptyState = () => {
+    if (activeTab === 'live') {
+      return (
+        <View style={styles.emptyContainer}>
+          <View style={styles.emptyIconContainer}>
+            <Ionicons name="time-outline" size={64} color={colors.text.secondary} />
+          </View>
+          <Text style={styles.emptyText}>No live auctions right now</Text>
+          <Text style={styles.emptySubtext}>
+            Check the Upcoming tab to see what's coming next!
+          </Text>
+          {tabCounts.upcoming > 0 && (
+            <TouchableOpacity
+              style={styles.emptyButton}
+              onPress={() => handleTabPress('upcoming')}
+            >
+              <Text style={styles.emptyButtonText}>View Upcoming</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      );
+    }
+    
+    if (activeTab === 'upcoming') {
+      return (
+        <View style={styles.emptyContainer}>
+          <View style={styles.emptyIconContainer}>
+            <Ionicons name="calendar-outline" size={64} color={colors.text.secondary} />
+          </View>
+          <Text style={styles.emptyText}>No upcoming auctions</Text>
+          {stats.nextAuction ? (
+            <Text style={styles.emptySubtext}>
+              Next auction starts soon - check back!
+            </Text>
+          ) : (
+            <Text style={styles.emptySubtext}>
+              New auctions will appear here when scheduled
+            </Text>
+          )}
+        </View>
+      );
+    }
+    
+    // Closed
+    return (
+      <View style={styles.emptyContainer}>
+        <View style={styles.emptyIconContainer}>
+          <Ionicons name="checkmark-circle-outline" size={64} color={colors.text.secondary} />
+        </View>
+        <Text style={styles.emptyText}>No closed auctions</Text>
+        <Text style={styles.emptySubtext}>
+          Completed auctions will appear here
+        </Text>
+      </View>
+    );
+  };
+
+  const indicatorTranslateX = tabIndicatorAnim.interpolate({
+    inputRange: [0, 1, 2],
+    outputRange: [0, SCREEN_WIDTH / 3, (SCREEN_WIDTH / 3) * 2],
+  });
 
   if (loading) {
     return (
@@ -254,7 +423,7 @@ export default function AuctionsScreen() {
           <Text style={styles.headerTitle}>Auctions</Text>
         </View>
         <View style={styles.tabBar}>
-          <View style={[styles.tab, styles.tabActive]}>
+          <View style={styles.tab}>
             <Text style={styles.tabTextActive}>🔴 Live</Text>
           </View>
           <View style={styles.tab}>
@@ -283,81 +452,162 @@ export default function AuctionsScreen() {
       </View>
 
       {/* Tab Bar */}
-      <View style={styles.tabBar}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'live' && styles.tabActive]}
-          onPress={() => handleTabPress('live')}
-        >
-          <Text style={[styles.tabText, activeTab === 'live' && styles.tabTextActive]}>
-            🔴 Live
-          </Text>
-          {tabCounts.live > 0 && (
-            <View style={[styles.badge, activeTab === 'live' && styles.badgeActive]}>
-              <Text style={[styles.badgeText, activeTab === 'live' && styles.badgeTextActive]}>
-                {tabCounts.live}
-              </Text>
-            </View>
-          )}
-        </TouchableOpacity>
+      <View style={styles.tabBarContainer}>
+        <View style={styles.tabBar}>
+          <TouchableOpacity
+            style={styles.tab}
+            onPress={() => handleTabPress('live')}
+          >
+            <Text style={[styles.tabText, activeTab === 'live' && styles.tabTextActive]}>
+              🔴 Live
+            </Text>
+            {tabCounts.live > 0 && (
+              <PulsingBadge count={tabCounts.live} active={activeTab === 'live'} />
+            )}
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'upcoming' && styles.tabActive]}
-          onPress={() => handleTabPress('upcoming')}
-        >
-          <Text style={[styles.tabText, activeTab === 'upcoming' && styles.tabTextActive]}>
-            📅 Upcoming
-          </Text>
-          {tabCounts.upcoming > 0 && (
-            <View style={[styles.badge, activeTab === 'upcoming' && styles.badgeActive]}>
-              <Text style={[styles.badgeText, activeTab === 'upcoming' && styles.badgeTextActive]}>
-                {tabCounts.upcoming}
-              </Text>
-            </View>
-          )}
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.tab}
+            onPress={() => handleTabPress('upcoming')}
+          >
+            <Text style={[styles.tabText, activeTab === 'upcoming' && styles.tabTextActive]}>
+              📅 Upcoming
+            </Text>
+            {tabCounts.upcoming > 0 && (
+              <View style={[styles.badge, activeTab === 'upcoming' && styles.badgeActive]}>
+                <Text style={[styles.badgeText, activeTab === 'upcoming' && styles.badgeTextActive]}>
+                  {tabCounts.upcoming}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'closed' && styles.tabActive]}
-          onPress={() => handleTabPress('closed')}
-        >
-          <Text style={[styles.tabText, activeTab === 'closed' && styles.tabTextActive]}>
-            🏁 Closed
-          </Text>
-          {tabCounts.closed > 0 && (
-            <View style={[styles.badge, activeTab === 'closed' && styles.badgeActive]}>
-              <Text style={[styles.badgeText, activeTab === 'closed' && styles.badgeTextActive]}>
-                {tabCounts.closed}
-              </Text>
-            </View>
-          )}
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.tab}
+            onPress={() => handleTabPress('closed')}
+          >
+            <Text style={[styles.tabText, activeTab === 'closed' && styles.tabTextActive]}>
+              🏁 Closed
+            </Text>
+            {tabCounts.closed > 0 && (
+              <View style={[styles.badge, activeTab === 'closed' && styles.badgeActive]}>
+                <Text style={[styles.badgeText, activeTab === 'closed' && styles.badgeTextActive]}>
+                  {tabCounts.closed}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
+        
+        {/* Animated Indicator */}
+        <Animated.View 
+          style={[
+            styles.tabIndicator,
+            {
+              transform: [{ translateX: indicatorTranslateX }],
+            },
+          ]} 
+        />
       </View>
 
-      {/* Content */}
-      <FlatList
-        data={filteredAuctions}
-        renderItem={renderAuctionCard}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={colors.brand}
-            colors={[colors.brand]}
-          />
-        }
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>
-              {activeTab === 'live' && 'No live auctions'}
-              {activeTab === 'upcoming' && 'No upcoming auctions'}
-              {activeTab === 'closed' && 'No closed auctions'}
+      {/* Stats Bar */}
+      {activeTab === 'live' && tabCounts.live > 0 && (
+        <View style={styles.statsBar}>
+          <View style={styles.statItem}>
+            <Text style={styles.statLabel}>Total Value</Text>
+            <Text style={styles.statValue}>
+              ${(stats.totalValue / 100).toLocaleString('en-US', { maximumFractionDigits: 0 })}
             </Text>
-            <Text style={styles.emptySubtext}>Check back soon for new items</Text>
           </View>
-        }
-      />
+          {stats.endingSoonCount > 0 && (
+            <View style={styles.statItem}>
+              <Ionicons name="flash" size={16} color="#D32F2F" />
+              <Text style={styles.statHighlight}>
+                {stats.endingSoonCount} ending within 1 hour
+              </Text>
+            </View>
+          )}
+        </View>
+      )}
+
+      {/* Sort Menu */}
+      <View style={styles.sortContainer}>
+        <TouchableOpacity
+          style={styles.sortButton}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setShowSortMenu(!showSortMenu);
+          }}
+        >
+          <Text style={styles.sortButtonText}>
+            Sort: {sortBy === 'ending' ? 'Ending Soon' : sortBy === 'highest' ? 'Highest Bid' : 'Newest'}
+          </Text>
+          <Ionicons name="chevron-down" size={16} color={colors.text.primary} />
+        </TouchableOpacity>
+        
+        {showSortMenu && (
+          <View style={styles.sortMenu}>
+            <TouchableOpacity
+              style={[styles.sortOption, sortBy === 'ending' && styles.sortOptionActive]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setSortBy('ending');
+                setShowSortMenu(false);
+              }}
+            >
+              <Text style={[styles.sortOptionText, sortBy === 'ending' && styles.sortOptionTextActive]}>
+                Ending Soon
+              </Text>
+              {sortBy === 'ending' && <Ionicons name="checkmark" size={20} color="#0654BA" />}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.sortOption, sortBy === 'highest' && styles.sortOptionActive]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setSortBy('highest');
+                setShowSortMenu(false);
+              }}
+            >
+              <Text style={[styles.sortOptionText, sortBy === 'highest' && styles.sortOptionTextActive]}>
+                Highest Bid
+              </Text>
+              {sortBy === 'highest' && <Ionicons name="checkmark" size={20} color="#0654BA" />}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.sortOption, sortBy === 'newest' && styles.sortOptionActive]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setSortBy('newest');
+                setShowSortMenu(false);
+              }}
+            >
+              <Text style={[styles.sortOptionText, sortBy === 'newest' && styles.sortOptionTextActive]}>
+                Newest
+              </Text>
+              {sortBy === 'newest' && <Ionicons name="checkmark" size={20} color="#0654BA" />}
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+
+      {/* Content with Fade Animation */}
+      <Animated.View style={[styles.contentContainer, { opacity: contentFadeAnim }]}>
+        <FlatList
+          data={filteredAuctions}
+          renderItem={renderAuctionCard}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.brand}
+              colors={[colors.brand]}
+            />
+          }
+          ListEmptyComponent={renderEmptyState()}
+        />
+      </Animated.View>
     </SafeAreaView>
   );
 }
@@ -391,11 +641,14 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     fontWeight: typography.weights.medium,
   },
-  tabBar: {
-    flexDirection: 'row',
+  tabBarContainer: {
+    position: 'relative',
     backgroundColor: colors.surface,
     borderBottomWidth: 2,
     borderBottomColor: colors.border,
+  },
+  tabBar: {
+    flexDirection: 'row',
   },
   tab: {
     flex: 1,
@@ -404,11 +657,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: spacing.md,
     gap: spacing.xs,
-    borderBottomWidth: 3,
-    borderBottomColor: 'transparent',
-  },
-  tabActive: {
-    borderBottomColor: '#0654BA',
   },
   tabText: {
     fontSize: typography.body.size,
@@ -418,6 +666,14 @@ const styles = StyleSheet.create({
   tabTextActive: {
     fontWeight: typography.weights.bold,
     color: '#0654BA',
+  },
+  tabIndicator: {
+    position: 'absolute',
+    bottom: -2,
+    left: 0,
+    width: SCREEN_WIDTH / 3,
+    height: 3,
+    backgroundColor: '#0654BA',
   },
   badge: {
     backgroundColor: colors.border,
@@ -439,6 +695,92 @@ const styles = StyleSheet.create({
   badgeTextActive: {
     color: colors.surface,
   },
+  statsBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    backgroundColor: '#FFF9E6',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5E5B8',
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  statLabel: {
+    fontSize: typography.caption.size,
+    color: colors.text.secondary,
+    fontWeight: typography.weights.medium,
+  },
+  statValue: {
+    fontSize: typography.body.size,
+    fontWeight: typography.weights.bold,
+    color: colors.text.primary,
+  },
+  statHighlight: {
+    fontSize: typography.caption.size,
+    fontWeight: typography.weights.semibold,
+    color: '#D32F2F',
+  },
+  sortContainer: {
+    position: 'relative',
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  sortButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.sm,
+  },
+  sortButtonText: {
+    fontSize: typography.body.size,
+    fontWeight: typography.weights.medium,
+    color: colors.text.primary,
+  },
+  sortMenu: {
+    position: 'absolute',
+    top: '100%',
+    right: spacing.lg,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    minWidth: 180,
+    zIndex: 1000,
+    ...shadow.card,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  sortOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  sortOptionActive: {
+    backgroundColor: '#F0F7FF',
+  },
+  sortOptionText: {
+    fontSize: typography.body.size,
+    color: colors.text.primary,
+  },
+  sortOptionTextActive: {
+    fontWeight: typography.weights.semibold,
+    color: '#0654BA',
+  },
+  contentContainer: {
+    flex: 1,
+  },
   listContent: {
     padding: spacing.md,
   },
@@ -453,6 +795,25 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 4,
+  },
+  cardEndingSoon: {
+    borderWidth: 2,
+    borderColor: '#D32F2F',
+  },
+  endingSoonBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#D32F2F',
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    gap: spacing.xs,
+    justifyContent: 'center',
+  },
+  endingSoonText: {
+    fontSize: typography.caption.size,
+    fontWeight: typography.weights.bold,
+    color: colors.surface,
+    letterSpacing: 0.5,
   },
   imageWrapper: {
     width: '100%',
@@ -561,16 +922,35 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xxl * 2,
     alignItems: 'center',
     width: '100%',
+    paddingHorizontal: spacing.lg,
+  },
+  emptyIconContainer: {
+    marginBottom: spacing.lg,
   },
   emptyText: {
     fontSize: typography.title.size,
     fontWeight: typography.title.weight,
-    color: colors.text.secondary,
-    marginBottom: spacing.xs,
+    color: colors.text.primary,
+    marginBottom: spacing.sm,
+    textAlign: 'center',
   },
   emptySubtext: {
     fontSize: typography.body.size,
-    color: colors.text.muted,
+    color: colors.text.secondary,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: spacing.lg,
+  },
+  emptyButton: {
+    backgroundColor: '#0654BA',
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderRadius: radius.pill,
+  },
+  emptyButtonText: {
+    fontSize: typography.body.size,
+    fontWeight: typography.weights.semibold,
+    color: colors.surface,
   },
   // Skeleton styles
   skeletonContainer: {
