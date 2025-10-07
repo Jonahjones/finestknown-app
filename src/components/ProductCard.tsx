@@ -241,11 +241,7 @@ export function ProductCard({
                   <Text style={styles.badgeText}>NEW</Text>
                 </View>
               )}
-              {!isSoldOut && isLowStock && (
-                <View style={[styles.badge, styles.lowStockBadge]}>
-                  <Text style={styles.badgeText}>LOW STOCK</Text>
-                </View>
-              )}
+              {/* LOW STOCK badge removed - stock indicator dot handles this */}
             </View>
 
             {/* Image pagination dots */}
