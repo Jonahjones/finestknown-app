@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, FlatList, Image, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, FlatList, Image, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuctionBadge } from '../../src/components/auction/AuctionBadge';
 import { CountdownTimer } from '../../src/components/auction/CountdownTimer';
@@ -175,34 +175,15 @@ export default function AuctionsScreen() {
   };
 
   const renderAuctionCard = ({ item }: { item: Auction }) => {
-    const scaleAnim = useRef(new Animated.Value(1)).current;
-
-    const handlePressIn = () => {
-      Animated.spring(scaleAnim, {
-        toValue: 0.98,
-        useNativeDriver: true,
-      }).start();
-    };
-
-    const handlePressOut = () => {
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        useNativeDriver: true,
-      }).start();
-    };
-
     // Mock bid count - in production, would come from API
     const bidCount = Math.floor(Math.random() * 20) + 1;
 
     return (
-      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-        <TouchableOpacity
-          style={styles.card}
-          onPress={() => handleAuctionPress(item.id)}
-          onPressIn={handlePressIn}
-          onPressOut={handlePressOut}
-          activeOpacity={1}
-        >
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => handleAuctionPress(item.id)}
+        activeOpacity={0.8}
+      >
           <View style={styles.imageWrapper}>
             <Image
               source={{
@@ -263,7 +244,6 @@ export default function AuctionsScreen() {
             )}
           </View>
         </TouchableOpacity>
-      </Animated.View>
     );
   };
 
