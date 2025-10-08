@@ -12,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import { colors, radius, shadows, spacing } from '../../design/tokens';
-import { useCartStore } from '../../store/cart';
+import { useAddToCartMutation } from '../../hooks/useCart';
 import type { Product } from '../../types';
 
 interface ResourceProductRowProps {
@@ -27,6 +27,7 @@ export function ResourceProductRow({
   isLoading = false,
 }: ResourceProductRowProps) {
   const [addingToCart, setAddingToCart] = useState<Record<string, boolean>>({});
+  const addToCartMutation = useAddToCartMutation();
 
   const handleAddToCart = async (product: Product, e: any) => {
     e.stopPropagation();
@@ -37,13 +38,10 @@ export function ResourceProductRow({
     setAddingToCart(prev => ({ ...prev, [product.id]: true }));
 
     try {
-      const { addItem } = useCartStore.getState();
-      await addItem({
+      await addToCartMutation.mutateAsync({
         productId: product.id,
-        title: product.title,
-        priceCents: product.price_cents,
-        quantity: 1,
-        photos: product.photos,
+        qty: 1,
+        price_cents: product.price_cents,
       });
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

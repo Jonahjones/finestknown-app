@@ -3,8 +3,8 @@ export { ResourceEmptyState } from './ResourceEmptyState';
 export { ResourcePageHeader } from './ResourcePageHeader';
 export { ResourceProductRow } from './ResourceProductRow';
 export {
-  ResourceSidebar,
-  ResourceSidebarSection,
-  ResourceSidebarText,
+    ResourceSidebar,
+    ResourceSidebarSection,
+    ResourceSidebarText
 } from './ResourceSidebar';
 
